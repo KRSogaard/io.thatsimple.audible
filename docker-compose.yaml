@@ -1,0 +1,53 @@
+version: "3"
+services:
+  
+  # ui:
+  #  build:
+  #     context: ./ui
+  #     dockerfile: Dockerfile.dev
+  #  ports:
+  #   -  3000:3000
+  #  networks:
+  #   -  mean-stack-net
+  #  volumes:
+  #   -  ./ui/src:/usr/app/src
+  #   -  ./ui/public:/usr/app/public
+  #  depends_on:
+  #   - api
+  #  stdin_open: true
+  #  tty: true
+
+  api:
+    build:
+       context: ./api
+       dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./api:/usr/app/
+      - /usr/app/node_modules
+    ports:
+      - 3080:3080
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "postgres://audible-api:12345@postgres-db/audible"
+    depends_on:
+      - postgres-db
+
+  postgres-db:
+    image: postgres:9.6.2-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: audible-api
+      POSTGRES_PASSWORD: 12345 
+      POSTGRES_DB: audible
+    ports:
+      - 5455:5432
+
+networks:
+  mean-stack-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
