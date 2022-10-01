@@ -30,24 +30,32 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: "postgres://audible-api:12345@postgres-db/audible"
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: 12345
+      DB_NAME: audible
     depends_on:
-      - postgres-db
+      - mysql-db
 
-  postgres-db:
-    image: postgres:9.6.2-alpine
+  mysql-db:
+    image: mysql:latest
+    cap_add:
+      - SYS_NICE
     restart: always
     environment:
-      POSTGRES_USER: audible-api
-      POSTGRES_PASSWORD: 12345 
-      POSTGRES_DB: audible
+      - MYSQL_DATABASE=audible
+      - MYSQL_ROOT_PASSWORD=12345
     ports:
-      - 5455:5432
+      - '3306:3306'
+    volumes:
+      - db:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-networks:
-  mean-stack-net:
-    driver: bridge
+# networks:
+#   mean-stack-net:
+#     driver: bridge
 
 volumes:
-  mongo-data:
+  db:
     driver: local
