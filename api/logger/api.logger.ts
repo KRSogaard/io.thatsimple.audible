@@ -1,15 +1,25 @@
-const pine = require('pine');
+const pine = require("pine");
 
 const logger = pine();
 
-
 export class APILogger {
-
-    info(message, data) {
-        logger.info(`${message}   ${undefined != data ? JSON.stringify(data) : ''}`);
+  info(message: string, data?: any) {
+    if (data) {
+      logger.info(`${message} (${JSON.stringify(data)})`);
+    } else {
+      logger.info(message);
     }
+  }
 
-    error(message) {
-        logger.error(message);
+  debug(message: string, data?: any) {
+    if (data) {
+      logger.debug(`${message} (${JSON.stringify(data)})`);
+    } else {
+      logger.debug(message);
     }
+  }
+
+  error(message: string) {
+    logger.error(message);
+  }
 }
