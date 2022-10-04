@@ -1,13 +1,15 @@
 interface ParseAudioBook {
   title: string;
   amazon_id: string;
+  released: number;
   link: string;
+  image: string;
   subtitle?: string;
   authors: ParseAudioBookPerson[];
-  narrators: ParseAudioBookPerson[];
+  narrators: string[];
   runtime: number;
   summary: string;
-  series?: ParseAudioBookSeries;
+  series?: ParseAudioBookSeries[];
   category: ParseAudioBookCategory;
   tags: string[];
 }
@@ -20,6 +22,7 @@ export interface ParseAudioBookSeries {
   name: string;
   link: string;
   id: string;
+  bookNumber?: string | null;
 }
 export interface ParseAudioBookCategory {
   name: string;

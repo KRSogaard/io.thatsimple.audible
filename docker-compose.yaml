@@ -17,26 +17,26 @@ services:
   #  stdin_open: true
   #  tty: true
 
-  api:
-    build:
-       context: ./api
-       dockerfile: Dockerfile.dev
-    command: npm run dev
-    volumes:
-      - ./api:/usr/app/
-      - /usr/app/node_modules
-    ports:
-      - 3080:3080
-    depends_on:
-      - postgres
-    environment:
-      DB_HOST: mysql-db
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: 12345
-      DB_NAME: audible
-    depends_on:
-      - mysql-db
+  # api:
+  #   build:
+  #      context: ./api
+  #      dockerfile: Dockerfile.dev
+  #   command: npm run dev
+  #   volumes:
+  #     - ./api:/usr/app/
+  #     - /usr/app/node_modules
+  #   ports:
+  #     - 3080:3080
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     DB_HOST: mysql-db
+  #     DB_PORT: 3306
+  #     DB_USER: root
+  #     DB_PASSWORD: 12345
+  #     DB_NAME: audible
+  #   depends_on:
+  #     - mysql-db
 
   mysql-db:
     image: mysql:latest
@@ -52,6 +52,20 @@ services:
       - db:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  minio:
+    image: minio/minio
+    volumes:
+      - ./minio/data:/data
+      # - minio_storage:/data
+      # - ./minio/config:/root/.minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    command: server --console-address ":9001" /data
+
 # networks:
 #   mean-stack-net:
 #     driver: bridge
@@ -59,3 +73,4 @@ services:
 volumes:
   db:
     driver: local
+  minio_storage: {}

@@ -19,7 +19,11 @@ export class APILogger {
     }
   }
 
-  error(message: string) {
-    logger.error(message);
+  error(message: string, error?: Error) {
+    if (error) {
+      logger.error(message + " [" + error.message + "]");
+    } else {
+      logger.error(message);
+    }
   }
 }

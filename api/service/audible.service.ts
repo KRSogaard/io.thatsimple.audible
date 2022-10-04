@@ -4,7 +4,9 @@ import { APILogger } from "../logger/api.logger";
 import * as fs from "fs";
 import * as crypto from "crypto";
 import ParseAudioBook, { ParseAudioBookSeries, ParseAudioBookCategory } from "../models/parsed_audiobook.model";
+import ParseSeries from "../models/parsed_series.model";
 import * as timespan from "timespan-parser";
+import * as moment from "moment";
 
 export class AudibleService {
   public logger: APILogger;
@@ -21,6 +23,12 @@ export class AudibleService {
       subtitle = null;
     }
 
+    let jsonData = htmlDom.match('"datePublished":\\s+"([^"]+)')[1].trim();
+    let released = 0;
+    if (jsonData) {
+      released = Math.floor(new Date(jsonData).getTime() / 1000);
+    }
+
     let link = $("link[rel='canonical']").attr("href");
     let amazon_id = link?.split("/")?.pop();
 
@@ -28,46 +36,69 @@ export class AudibleService {
     $(".authorLabel a").each((i, elem) => {
       authors.push({
         name: $(elem).text(),
-        link: "https://www.audible.com" + $(elem).attr("href"),
+        link: "https://www.audible.com" + $(elem).attr("href")?.split("?")[0],
       });
     });
     let narrators = [];
     $(".narratorLabel a").each((i, elem) => {
-      narrators.push({
-        name: $(elem).text(),
-        link: "https://www.audible.com" + $(elem).attr("href"),
-      });
+      narrators.push($(elem).text().trim());
     });
 
-    let runtime = $("li.runtimeLabel").text().split(":")[1].replace("hrs", "h").replace("mins", "m").replace("and", "").trim();
-    let runtimeSeconds = timespan.parse(runtime);
+    let runtimeSeconds = 0;
+    let durationDom = htmlDom.match('"duration":\\s+"([^"]+)');
+    if (durationDom && durationDom.length > 1) {
+      jsonData = durationDom[1].trim();
+      runtimeSeconds = Math.floor(moment.duration(jsonData).asMilliseconds() / 1000);
+    } else {
+      this.logger.debug("Did not find ISO time duration, trying to parse from text");
+      let runtime = $("li.runtimeLabel").text().split(":")[1].replace("hrs", "h").replace("mins", "m").replace("and", "").trim();
+      runtimeSeconds = timespan.parse(runtime);
+    }
 
     let summary = "";
 
     $(".productPublisherSummary p").each((i, elem) => {
       summary += $(elem).text() + "\n";
     });
+    summary = summary.trim();
 
-    let seriesDom = $("li.seriesLabel a");
-    let seriesResult: ParseAudioBookSeries | null = null;
+    let parentDom = $("li.seriesLabel");
+    let bookNumbersTryGet = parentDom
+      .contents()
+      .filter((i, elem) => elem.type === "text" && elem.nodeValue.toLowerCase().includes("book"))
+      .map((i, elem) => elem as any)
+      .get();
+    let seriesDom = parentDom.find("a");
+    let seriesResult: ParseAudioBookSeries[] = [];
     if (seriesDom.length > 0) {
-      let seriesLink = "https://www.audible.com" + seriesDom.attr("href").split("?")[0];
-      let seriesName = seriesDom.text();
-      let seriesId = seriesLink?.split("/")?.pop();
-      let bookNumberTry1 = $("li.seriesLabel").text().split("Book")?.pop().trim();
-      console.log("Test: ", bookNumberTry1);
+      seriesDom.each((i, elem) => {
+        let bookNumber = null;
+        let dom = $(elem);
+        let seriesLink = "https://www.audible.com" + dom.attr("href").split("?")[0];
+        let seriesName = dom.text();
+        let seriesId = seriesLink?.split("/")?.pop();
 
-      seriesResult = {
-        name: seriesName,
-        link: seriesLink,
-        id: seriesId,
-      };
+        if (bookNumbersTryGet.length > 0 && bookNumbersTryGet[i]) {
+          let bookText = bookNumbersTryGet[i].nodeValue.toLowerCase() as string;
+          bookNumber = bookText.slice(bookText.indexOf("book") + "book".length).trim();
+          if (bookNumber.endsWith(",")) {
+            bookNumber = bookNumber.slice(0, bookNumber.length - 1);
+          }
+        }
+
+        seriesResult.push({
+          name: seriesName,
+          link: seriesLink,
+          id: seriesId,
+          bookNumber: bookNumber,
+        });
+      });
     }
 
     let categoryDom = $("li.categoriesLabel a");
     let categoryResult: ParseAudioBookCategory | null = null;
     if (categoryDom.length > 0) {
-      let categoryLink = "https://www.audible.com" + categoryDom.attr("href").split("?")[0];
+      let categoryLink = "https://www.audible.com" + categoryDom.attr("href")?.split("?")[0];
       let categoryName = categoryDom.text();
       let categoryId = categoryLink?.split("/")?.pop();
       categoryResult = {
@@ -82,10 +113,14 @@ export class AudibleService {
       tags.push($(elem).text().trim());
     });
 
+    let image = $(".hero-content img.bc-pub-block").attr("src");
+
     return {
       amazon_id: amazon_id,
       link: link,
       title: title,
+      image: image,
+      released: released,
       subtitle: subtitle,
       authors: authors,
       narrators: narrators,
@@ -97,7 +132,24 @@ export class AudibleService {
     };
   }
 
-  async downloadBookHtml(downloadUrl: string): Promise<string | null> {
+  parseSeries(htmlDom: string): ParseSeries {
+    let bookListUrls = [];
+    const $ = cheerio.load(htmlDom, null, false);
+    $("li.productListItem").each((i, elem) => {
+      let dom = $(elem);
+      let url = "https://www.audible.com" + dom.find("h3 a").attr("href")?.split("?")[0];
+      bookListUrls.push(url);
+    });
+
+    let asin = $("input[name='asin']").attr("value");
+
+    return {
+      series_id: asin,
+      bookUrls: bookListUrls,
+    };
+  }
+
+  async downloadHtml(downloadUrl: string): Promise<string | null> {
     // This is temp
     let hash = crypto.createHash("md5").update(downloadUrl).digest("hex");
     if (!fs.existsSync(`./temp`)) {
