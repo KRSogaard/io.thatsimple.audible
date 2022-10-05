@@ -10,13 +10,14 @@ interface ParseAudioBook {
   runtime: number;
   summary: string;
   series?: ParseAudioBookSeries[];
-  category: ParseAudioBookCategory;
+  categories: ParseAudioBookCategory[];
   tags: string[];
 }
 
 export interface ParseAudioBookPerson {
   name: string;
   link: string;
+  asin: string;
 }
 export interface ParseAudioBookSeries {
   name: string;

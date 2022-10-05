@@ -1,6 +1,6 @@
 CREATE TABLE if not exists `books` (
-	`id` INT NOT NULL,
-	`book_id` VARCHAR(128) NOT NULL,
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`asin` VARCHAR(128) NOT NULL,
 	`link` TEXT,
 	`title` VARCHAR(255),
 	`length` INT,
@@ -21,18 +21,47 @@ CREATE TABLE if not exists `tags` (
 
 CREATE TABLE if not exists `narrators` (
 	`id` INT NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(128),
+	PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE if not exists `narrators_books` (
+	`id` INT NOT NULL AUTO_INCREMENT,
 	`book_id` INT,
-	`narrator` VARCHAR(128),
+	`narrator_id` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
+        ON DELETE CASCADE,
+  FOREIGN KEY (`narrator_id`)
+        REFERENCES `narrators`(`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE if not exists `categories` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(128),
+	`link` VARCHAR(512),
+	PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE if not exists `categories_books` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`book_id` INT,
+	`category_id` INT,
+	PRIMARY KEY (`id`),
+  FOREIGN KEY (`book_id`)
+        REFERENCES `books`(`id`)
+        ON DELETE CASCADE,
+  FOREIGN KEY (`category_id`)
+        REFERENCES `categories`(`id`)
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE if not exists `authors` (
 	`id` INT NOT NULL AUTO_INCREMENT,
-	`author_id` VARCHAR(128),
-	`url` VARCHAR(512),
+	`asin` VARCHAR(128),
+	`link` VARCHAR(512),
 	`name` VARCHAR(128),
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
@@ -52,9 +81,8 @@ CREATE TABLE if not exists `books_authors` (
 
 CREATE TABLE if not exists `series` (
 	`id` INT NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(128),
-	`url` VARCHAR(512),
-	`summary` TEXT,
+	`asin` VARCHAR(128),
+	`link` VARCHAR(512),
 	`last_updated` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;

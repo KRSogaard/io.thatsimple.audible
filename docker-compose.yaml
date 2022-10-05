@@ -1,6 +1,5 @@
 version: "3"
 services:
-  
   # ui:
   #  build:
   #     context: ./ui
@@ -47,7 +46,7 @@ services:
       - MYSQL_DATABASE=audible
       - MYSQL_ROOT_PASSWORD=12345
     ports:
-      - '3306:3306'
+      - "3306:3306"
     volumes:
       - db:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -65,6 +64,20 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
     command: server --console-address ":9001" /data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      # AMQP protocol port
+      - "5672:5672"
+      # HTTP management UI
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=myuser
+      - RABBITMQ_DEFAULT_PASS=mypassword
+    volumes:
+      - ./rabbitmq/data/:/var/lib/rabbitmq/
+      - ./rabbitmq/log/:/var/log/rabbitmq
 
 # networks:
 #   mean-stack-net:
