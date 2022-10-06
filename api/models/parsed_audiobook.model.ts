@@ -24,6 +24,7 @@ export interface ParseAudioBookSeries {
   link: string;
   id: string;
   bookNumber?: string | null;
+  summary?: string | null;
 }
 export interface ParseAudioBookCategory {
   name: string;

@@ -6,6 +6,7 @@ export interface AudibleBook {
   length: number;
   released: Date;
   summary: string;
+  lastUpdated?: Date;
   series?: AudibleSeriesBook[];
   authors?: AudibleAuthor[];
   tags?: string[];
@@ -17,8 +18,10 @@ export interface AudibleSeries {
   id?: number;
   asin: string;
   link: string;
+  summary: string;
   name: string;
   lastUpdated?: Date;
+  shouldDownload?: boolean;
 }
 
 export interface AudibleSeriesBook extends AudibleSeries {

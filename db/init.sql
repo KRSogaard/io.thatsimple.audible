@@ -6,6 +6,8 @@ CREATE TABLE if not exists `books` (
 	`length` INT,
 	`released` INT,
 	`summary` TEXT,
+	`last_updated` INT,
+	`created` INT,
 	PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB;
 
@@ -13,6 +15,7 @@ CREATE TABLE if not exists `tags` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`book_id` INT,
 	`tag` VARCHAR(128),
+	`created` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
@@ -22,6 +25,7 @@ CREATE TABLE if not exists `tags` (
 CREATE TABLE if not exists `narrators` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`name` VARCHAR(128),
+	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
@@ -29,6 +33,7 @@ CREATE TABLE if not exists `narrators_books` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`book_id` INT,
 	`narrator_id` INT,
+	`created` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
@@ -42,6 +47,7 @@ CREATE TABLE if not exists `categories` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`name` VARCHAR(128),
 	`link` VARCHAR(512),
+	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
@@ -49,6 +55,7 @@ CREATE TABLE if not exists `categories_books` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`book_id` INT,
 	`category_id` INT,
+	`created` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
@@ -70,6 +77,7 @@ CREATE TABLE if not exists `books_authors` (
 	`id` INT AUTO_INCREMENT,
 	`book_id` INT,
 	`author_id` INT,
+	`created` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
@@ -84,6 +92,9 @@ CREATE TABLE if not exists `series` (
 	`asin` VARCHAR(128),
 	`link` VARCHAR(512),
 	`last_updated` INT,
+	`created` INT,
+	`summary` TEXT,
+  `shouldDownload` tinyint(1) DEFAULT NULL,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
@@ -92,6 +103,7 @@ CREATE TABLE if not exists `series_books` (
 	`series_id` INT,
 	`book_id` INT,
 	`book_number` VARCHAR(64),
+	`created` INT,
 	PRIMARY KEY (`id`),
   FOREIGN KEY (`book_id`)
         REFERENCES `books`(`id`)
@@ -106,6 +118,7 @@ CREATE TABLE if not exists `users` (
 	`username` VARCHAR(128),
 	`password` VARCHAR(128),
 	`password_salt` INT,
+	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
@@ -113,5 +126,6 @@ CREATE TABLE if not exists `users_books` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`user_id` INT,
 	`book_id` INT,
+	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;

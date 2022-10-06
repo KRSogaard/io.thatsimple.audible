@@ -101,6 +101,15 @@ class StorageService {
     }
   }
 
+  async hasImage(bookId: string): Promise<boolean> {
+    try {
+      let stat = await this.minioClient.statObject(imageBucket, this.getImageName(bookId));
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   getImageName(bookId: string): string {
     return bookId.toUpperCase() + ".jpg";
   }

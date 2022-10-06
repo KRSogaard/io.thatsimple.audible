@@ -17,6 +17,17 @@ export const RabbitMQConnection = async (): Promise<Connection> => {
   return connection;
 };
 
+export const GetChannel = async (): Promise<Channel> => {
+  return new Promise(async (resolve, reject) => {
+    RabbitMQConnection().then((connection) => {
+      connection.createChannel().then(async (channel) => {
+        await channel.assertQueue(RabbitMQAudibleChannel(), { durable: false });
+        resolve(channel);
+      });
+    });
+  });
+};
+
 export const RabbitMQAudibleChannel = (): string => {
   return process.env.RABBITMQ_AUDIBLE_CHANNEL;
 };

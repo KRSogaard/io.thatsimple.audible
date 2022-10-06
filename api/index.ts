@@ -25,6 +25,7 @@ function delay(milliseconds: number) {
 }
 
 let lastProcessingTime = 0;
+
 RabbitMQConnection().then((connection) => {
   connection.createChannel().then(async (channel) => {
     channel.assertQueue(RabbitMQAudibleChannel(), { durable: false });

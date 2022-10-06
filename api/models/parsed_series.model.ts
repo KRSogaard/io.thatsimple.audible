@@ -1,4 +1,15 @@
 export default interface ParseSeries {
-  series_id: string;
-  bookUrls: string[];
+  title: string;
+  summary: string;
+  link: string;
+  asin: string;
+  books: ParseSeriesBook[];
+}
+
+export interface ParseSeriesBook {
+  bookNumber: string;
+  asin: string;
+  link: string;
+  releaseDate?: Date;
+  lengthSeconds?: number;
 }
