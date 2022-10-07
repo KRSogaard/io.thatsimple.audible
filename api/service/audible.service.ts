@@ -335,8 +335,8 @@ export class AudibleService {
   async addBookToSeries(bookId: number, seriesId: number, bookNumber: string): Promise<any> {
     this.logger.debug("Adding book to series", [bookId, seriesId, bookNumber]);
 
-    let sql = "SELECT * FROM `series_books` WHERE `book_id` = ? AND `series_id` = ? AND `book_number` = ?";
-    let results = await this.runQuery(sql, [bookId, seriesId, bookNumber]);
+    let sql = "SELECT * FROM `series_books` WHERE `book_id` = ? AND `series_id` = ?";
+    let results = await this.runQuery(sql, [bookId, seriesId]);
     if (!results || results.length === 0) {
       let sql = "INSERT INTO `series_books` (`book_id`, `series_id`, `book_number`, `created`) VALUES (?, ?, ?, ?);";
       if (!bookNumber || bookNumber === "") {
@@ -345,6 +345,11 @@ export class AudibleService {
       await this.runQuery(sql, [bookId, seriesId, bookNumber, Math.round(Date.now() / 1000)]);
     } else {
       this.logger.debug("Book already in series", [bookId, seriesId]);
+      if (bookNumber != null && bookNumber !== "" && results[0].book_number !== bookNumber) {
+        this.logger.debug("Updating book number", [bookId, seriesId, bookNumber]);
+        let sql = "UPDATE `series_books` SET `book_number` = ? WHERE `book_id` = ? AND `series_id` = ?";
+        await this.runQuery(sql, [bookNumber, bookId, seriesId]);
+      }
     }
     await this.updateSeries(seriesId);
   }
@@ -399,6 +404,18 @@ export class AudibleService {
     };
   }
 
+  async addBookToUser(bookId: number, userId: number): Promise<any> {
+    this.logger.debug("Adding book to user", [bookId, userId]);
+    let sql = "SELECT * FROM `users_books` WHERE `book_id` = ? AND `user_id` = ?";
+    let results = await this.runQuery(sql, [bookId, userId]);
+    if (!results || results.length === 0) {
+      let sql = "INSERT INTO `users_books` (`book_id`, `user_id`, `created`) VALUES (?, ?, ?);";
+      await this.runQuery(sql, [bookId, userId, Math.round(Date.now() / 1000)]);
+    } else {
+      this.logger.debug("Book already in user's library", [bookId, userId]);
+    }
+  }
+
   async addBookToAuthor(bookId: number, authorId: number): Promise<void> {
     this.logger.debug("Adding book to author", [bookId, authorId]);
     let sql = "SELECT * FROM `books_authors` WHERE `book_id` = ? AND `author_id` = ?";
@@ -407,7 +424,7 @@ export class AudibleService {
       sql = "INSERT INTO `books_authors` (`book_id`, `author_id`, `created`) VALUES (?, ?, ?);";
       await this.runQuery(sql, [bookId, authorId, Math.round(Date.now() / 1000)]);
     } else {
-      this.logger.debug("Book already in author", [bookId, authorId]);
+      this.logger.debug("Book already in author", bookId, authorId);
     }
   }
 
@@ -418,29 +435,18 @@ export class AudibleService {
       sql = "INSERT INTO `tags` (`book_id`, `tag`, `created`) VALUES (?, ?, ?)";
       await this.runQuery(sql, [bookId, tag, Math.round(Date.now() / 1000)]);
     } else {
-      this.logger.debug("Tag already in book", [bookId, tag]);
+      this.logger.debug("Tag already in book", bookId, tag);
     }
   }
 
   async runQuery(sqlQuery: string, values: any | any[]): Promise<any> {
     return new Promise(function (resolve, reject) {
-      console.log("Submitting query", sqlQuery, values);
+      new APILogger().debug("Submitting query", sqlQuery, values);
       MySQLConnection().then((pool) => {
         pool.query(sqlQuery, values, function (error, results, fields) {
           if (error) {
             reject(error);
           } else resolve(results);
-        });
-      });
-    });
-  }
-
-  async execute(sqlQuery: string, values: any | any[]): Promise<any> {
-    return new Promise(function (resolve, reject) {
-      MySQLConnection().then((pool) => {
-        pool.execute(sqlQuery, values, function (error, results, fields) {
-          if (error) reject(error);
-          else resolve(results);
         });
       });
     });

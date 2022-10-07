@@ -17,7 +17,7 @@ const audibleManagementService = new AudibleManagementService();
 server.on("listening", function (): void {
   const addr = server.address();
   const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
-  logger.info(`Listening on ${bind}`, null);
+  logger.info(`Listening on `, bind);
 });
 
 function delay(milliseconds: number) {
@@ -30,7 +30,7 @@ RabbitMQConnection().then((connection) => {
   connection.createChannel().then(async (channel) => {
     channel.assertQueue(RabbitMQAudibleChannel(), { durable: false });
     channel.prefetch(1);
-
+    logger.info("Message listener started", RabbitMQAudibleChannel());
     while (true) {
       try {
         let message = await channel.get(RabbitMQAudibleChannel());
@@ -50,9 +50,9 @@ RabbitMQConnection().then((connection) => {
         }
 
         if (obj.type === "book") {
-          audibleManagementService.downloadBook(obj.url);
+          audibleManagementService.downloadBook(obj.url, true, obj.userId);
         } else if (obj.type == "series") {
-          audibleManagementService.downloadSeries(obj.url);
+          audibleManagementService.downloadSeries(obj.url, true);
         } else {
           logger.error("Unknown message type", null);
         }

@@ -104,8 +104,10 @@ class StorageService {
   async hasImage(bookId: string): Promise<boolean> {
     try {
       let stat = await this.minioClient.statObject(imageBucket, this.getImageName(bookId));
+      this.logger.debug("Stat", stat);
       return true;
     } catch (err) {
+      this.logger.debug("Image Error: ", err);
       return false;
     }
   }

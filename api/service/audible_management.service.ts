@@ -9,6 +9,7 @@ import StorageService from "./storage.service";
 import ParseAudioBook, { ParseAudioBookSeries, ParseAudioBookCategory } from "../models/parsed_audiobook.model";
 import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from "../models/audiblebook.model";
 import { RabbitMQConnection, RabbitMQAudibleChannel } from "../config/rabbitmq.config";
+import e = require("express");
 
 export class AudibleManagementService {
   public logger: APILogger;
@@ -19,23 +20,41 @@ export class AudibleManagementService {
     this.audibleService = new AudibleService();
   }
 
-  async downloadBook(url: string): Promise<void> {
-    let bookId = url.split("?")[0]?.split("/")?.pop();
-    if (!bookId) {
+  async downloadBook(url: string, force?: boolean, userId?: number): Promise<void> {
+    let bookASIN = url.split("?")[0]?.split("/")?.pop();
+    if (!bookASIN) {
       throw new Error("Failed to parse book id");
     }
 
-    let bookObj = await this.audibleService.getBookASIN(bookId);
+    let download = true;
+    let bookId: number | null = null;
+    let bookObj = await this.audibleService.getBookASIN(bookASIN);
     if (bookObj !== null) {
+      bookId = bookObj.id;
       this.logger.debug("Book already exists in database");
-      console.log("Last updated: ", bookObj.lastUpdated, ", one month ago: ", moment().subtract(1, "month").toDate());
-      if (bookObj.lastUpdated <= moment().subtract(1, "month").toDate()) {
-        this.logger.debug("Cached book is older than 1 month, updating");
+      if (force) {
+        this.logger.debug("Forcing download of book", bookObj.asin);
       } else {
-        return;
+        console.log("Last updated: ", bookObj.lastUpdated, ", one month ago: ", moment().subtract(1, "month").toDate());
+        if (bookObj.lastUpdated <= moment().subtract(1, "month").toDate()) {
+          this.logger.debug("Cached book is older than 1 month, updating");
+        } else {
+          download = false;
+        }
       }
     }
 
+    if (download) {
+      let newBook = await this.downloadAndCreateBook(url);
+      bookId = newBook.id;
+    }
+
+    if (userId && bookId) {
+      this.audibleService.addBookToUser(userId, bookId);
+    }
+  }
+
+  async downloadAndCreateBook(url: string): Promise<AudibleBook> {
     let html = await this.downloadHtml(url);
     if (!html || html.length < 100) {
       throw new Error("Failed to download book html");
@@ -80,12 +99,14 @@ export class AudibleManagementService {
     });
 
     if (newBook && book.image) {
-      if (!StorageService.hasImage(newBook.asin)) {
-        this.logger.debug("Downloading image for book: ", [newBook.title, newBook.asin]);
+      this.logger.debug("Downloading book image");
+      let imageCheck = await StorageService.hasImage(newBook.asin);
+      if (!imageCheck) {
+        this.logger.debug("Downloading image for book: ", newBook.title, newBook.asin);
         let image = await this.downloadImage(book.image);
         await StorageService.saveImage(newBook.asin, image);
       } else {
-        this.logger.debug("Image already exists for book: ", [newBook.title, newBook.asin]);
+        this.logger.debug("Image already exists for book: ", newBook.title, newBook.asin);
       }
     }
 
@@ -95,16 +116,22 @@ export class AudibleManagementService {
         this.downloadSeries(s.link);
       });
     }
+
+    return newBook;
   }
 
-  async downloadSeries(url: string): Promise<void> {
+  async downloadSeries(url: string, force?: boolean): Promise<void> {
     this.logger.debug("Downloading series: ", url);
 
     // ToDo: check if series need update
     let check = await this.audibleService.getSeriesASIN(url.split("?")[0]?.split("/")?.pop());
     if (check !== null && !check.shouldDownload && check.lastUpdated > moment().subtract(1, "month").toDate()) {
-      this.logger.debug("Series already exists in database and is less then 1 month old");
-      return;
+      if (force) {
+        this.logger.debug("Forcing download of series", check.asin);
+      } else {
+        this.logger.debug("Series already exists in database and is less then 1 month old");
+        return;
+      }
     }
 
     let html = await this.downloadHtml(url);
@@ -131,12 +158,12 @@ export class AudibleManagementService {
       } else {
         let series = savedBook.series.filter((s) => s.asin === saveSeries.asin);
         if (series.length === 0) {
-          this.logger.debug("Adding book to series: ", [savedBook.title, saveSeries.asin, saveSeries.name]);
+          this.logger.debug("Adding book to series: ", savedBook.title, saveSeries.asin, saveSeries.name);
           await this.audibleService.addBookToSeries(savedBook.id, saveSeries.id, book.bookNumber);
         } else {
-          this.logger.debug("Book already exists in series: ", [savedBook.title, savedBook.asin]);
+          this.logger.debug("Book already exists in series: ", savedBook.title, savedBook.asin);
           if (book.bookNumber != null && book.bookNumber.length > 0 && series[0].bookNumber !== book.bookNumber) {
-            this.logger.debug("Updating book number for book: ", [savedBook.title, savedBook.asin, book.bookNumber]);
+            this.logger.debug("Updating book number for book: ", savedBook.title, savedBook.asin, book.bookNumber);
             await this.audibleService.updateBookSeries(savedBook.id, series[0].id, book.bookNumber);
           }
         }

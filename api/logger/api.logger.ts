@@ -1,27 +1,46 @@
-const pine = require("pine");
+import * as pino from "pino";
+// const pretty = require("pino-pretty");
+// const logger = pino(pretty());
 
-const logger = pine();
+const logger = pino.default({
+  level: "trace",
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+      singleLine: true,
+    },
+  },
+});
 
 export class APILogger {
-  info(message: string, data?: any) {
+  info(message: string, ...data: any[]) {
     if (data) {
-      logger.info(`${message} (${JSON.stringify(data)})`);
+      logger.info({ ...data }, message);
     } else {
       logger.info(message);
     }
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, ...data: any[]) {
     if (data) {
-      logger.debug(`${message} (${JSON.stringify(data)})`);
+      logger.debug({ ...data }, message);
     } else {
       logger.debug(message);
     }
   }
 
-  error(message: string, error?: Error) {
-    if (error) {
-      logger.error(message + " [" + error.message + "]");
+  trace(message: string, ...data: any[]) {
+    if (data) {
+      logger.trace({ ...data }, message);
+    } else {
+      logger.trace(message);
+    }
+  }
+
+  error(message: string, ...data: any[]) {
+    if (data) {
+      logger.error({ ...data }, message);
     } else {
       logger.error(message);
     }
