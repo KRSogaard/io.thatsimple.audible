@@ -2,7 +2,7 @@ import { RabbitMQConnection, RabbitMQAudibleChannel } from '../config/rabbitmq.c
 import { APILogger } from '../logger/api.logger';
 const logger = new APILogger();
 
-export const sendDownloadBook = async (url: string, force?: boolean): Promise<void> => {
+export const sendDownloadBook = async (url: string, userId?: number, force?: boolean): Promise<void> => {
   logger.debug('Sending download book request: ', url);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
@@ -13,6 +13,7 @@ export const sendDownloadBook = async (url: string, force?: boolean): Promise<vo
           JSON.stringify({
             url: url,
             type: 'book',
+            userId: userId ? userId : null,
             force: force ? true : false,
           })
         )
@@ -21,7 +22,7 @@ export const sendDownloadBook = async (url: string, force?: boolean): Promise<vo
   });
 };
 
-export const sendDownloadSeries = async (url: string, force?: boolean): Promise<void> => {
+export const sendDownloadSeries = async (url: string, userId?: number, force?: boolean): Promise<void> => {
   logger.debug('Sending download series request: ', url);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
@@ -32,6 +33,7 @@ export const sendDownloadSeries = async (url: string, force?: boolean): Promise<
           JSON.stringify({
             url: url,
             type: 'series',
+            userId: userId ? userId : null,
             force: force ? true : false,
           })
         )

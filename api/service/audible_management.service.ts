@@ -55,7 +55,7 @@ export class AudibleManagementService {
 
     if (userId) {
       this.logger.debug('Adding book to user: ' + userId);
-      this.userService.addBookToUser(userId, bookId);
+      this.userService.addBookToUser(bookId, userId);
     } else {
       this.logger.debug('No user id provided, not adding book to user');
     }
@@ -68,6 +68,10 @@ export class AudibleManagementService {
     }
     if (book.lastUpdated <= moment().subtract(1, 'month').toDate()) {
       this.logger.debug('Book was updated more than 1 month ago, downloading');
+      return true;
+    }
+    if (!book.title) {
+      this.logger.debug('Book did not have a title, downloading');
       return true;
     }
     if (force) {
@@ -190,6 +194,9 @@ export class AudibleManagementService {
           this.logger.debug('Book ' + book.asin + ' not found in database, creating temp book');
           let bookId = await this.bookService.createTempBook(book.asin, book.link);
           await this.seriesService.addBookToSeries(bookId, storedSeries.id, book.bookNumber);
+          if (!book.link) {
+            this.logger.debug('Book ' + book.asin + ' did not have a link, adding to download queue', book);
+          }
           await Queue.sendDownloadBook(book.link);
         } else {
           let series = savedBook.series.filter((s) => s.asin === storedSeries.asin);

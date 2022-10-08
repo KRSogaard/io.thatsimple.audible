@@ -22,6 +22,14 @@ export class AudibleBookService {
     return await this.parseBookResult(results);
   }
 
+  async getBooksByUser(userId: number) {
+    let results = await mysql.runQuery(
+      'SELECT `books`.* FROM `books` ' + 'LEFT JOIN `users_books` ON `users_books`.book_id = `books`.id ' + 'WHERE `users_books`.user_id = ?',
+      [userId]
+    );
+    return results;
+  }
+
   async parseBookResult(results: any): Promise<AudibleBook> {
     if (results.length === 0) {
       return null;
@@ -80,6 +88,7 @@ export class AudibleBookService {
       tags: tags,
     };
   }
+
   async createTempBook(asin: string, link: string): Promise<number> {
     this.logger.debug('Creating temp book with asin: ' + asin, link);
     let sql = 'INSERT INTO `books` (`asin`, `link`, `created`) VALUES (?, ?, ?);';

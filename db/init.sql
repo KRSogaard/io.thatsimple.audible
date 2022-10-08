@@ -118,15 +118,33 @@ CREATE TABLE if not exists `users` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`username` VARCHAR(128),
 	`password` VARCHAR(128),
-	`password_salt` INT,
+	`password_salt` VARCHAR(20),
+	`email` VARCHAR(256),
 	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
-CREATE TABLE if not exists `users_books` (
-	`id` INT NOT NULL AUTO_INCREMENT,
-	`user_id` INT,
-	`book_id` INT,
-	`created` INT,
-	PRIMARY KEY (`id`)
+CREATE TABLE IF NOT EXISTS `users_books` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `book_id` int DEFAULT NULL,
+  `created` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`book_id`)
+        REFERENCES `books`(`id`)
+        ON DELETE CASCADE
+  FOREIGN KEY (`user_id`)
+        REFERENCES `users`(`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `users_tokens` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `token` VARCHAR(128) DEFAULT NULL,
+  `created` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`user_id`)
+        REFERENCES `users`(`id`)
+        ON DELETE CASCADE
 ) ENGINE=InnoDB;

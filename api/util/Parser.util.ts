@@ -11,6 +11,10 @@ export const parseBook = (htmlDom: string): ParseAudioBook => {
   logger.debug('Parsing book');
   const $ = cheerio.load(htmlDom, null, false);
   let title = $('h1.bc-heading').first().text();
+  if (!title || title.length === 0) {
+    title = $("meta[property='og:title']").attr('content').trim();
+  }
+
   let subtitle = $('h1.bc-heading').parent().next().text().trim();
   if (!subtitle || subtitle.trim() === '') {
     subtitle = null;
@@ -114,6 +118,12 @@ export const parseBook = (htmlDom: string): ParseAudioBook => {
   });
 
   let image = $('.hero-content img.bc-pub-block').attr('src');
+  if (!image || image.length === 0) {
+    let imageDom = htmlDom.match('"image":\\s+"([^"]+)');
+    if (imageDom && imageDom.length > 1) {
+      image = imageDom[1].trim();
+    }
+  }
 
   return {
     asin: amazon_id,
