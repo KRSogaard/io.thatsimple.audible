@@ -70,6 +70,7 @@ CREATE TABLE if not exists `authors` (
 	`asin` VARCHAR(128),
 	`link` VARCHAR(512),
 	`name` VARCHAR(128),
+	`created` INT,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
@@ -90,11 +91,11 @@ CREATE TABLE if not exists `books_authors` (
 CREATE TABLE if not exists `series` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`asin` VARCHAR(128),
+	`name` VARCHAR(128),
 	`link` VARCHAR(512),
 	`last_updated` INT,
 	`created` INT,
 	`summary` TEXT,
-  `shouldDownload` tinyint(1) DEFAULT NULL,
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 

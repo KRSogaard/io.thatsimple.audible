@@ -1,11 +1,11 @@
-import * as pino from "pino";
+import * as pino from 'pino';
 // const pretty = require("pino-pretty");
 // const logger = pino(pretty());
 
 const logger = pino.default({
-  level: "trace",
+  level: 'trace',
   transport: {
-    target: "pino-pretty",
+    target: 'pino-pretty',
     options: {
       colorize: true,
       singleLine: true,
@@ -38,11 +38,27 @@ export class APILogger {
     }
   }
 
+  warn(message: string, ...data: any[]) {
+    if (data) {
+      logger.warn({ ...data }, message);
+    } else {
+      logger.warn(message);
+    }
+  }
+
   error(message: string, ...data: any[]) {
     if (data) {
       logger.error({ ...data }, message);
     } else {
       logger.error(message);
+    }
+  }
+
+  fatal(message: string, ...data: any[]) {
+    if (data) {
+      logger.fatal({ ...data }, message);
+    } else {
+      logger.fatal(message);
     }
   }
 }

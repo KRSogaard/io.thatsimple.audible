@@ -1,6 +1,6 @@
 interface ParseAudioBook {
   title: string;
-  amazon_id: string;
+  asin: string;
   released: number;
   link: string;
   image: string;
@@ -22,7 +22,7 @@ export interface ParseAudioBookPerson {
 export interface ParseAudioBookSeries {
   name: string;
   link: string;
-  id: string;
+  asin: string;
   bookNumber?: string | null;
   summary?: string | null;
 }

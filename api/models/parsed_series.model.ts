@@ -1,5 +1,5 @@
-export default interface ParseSeries {
-  title: string;
+export interface ParseSeries {
+  name: string;
   summary: string;
   link: string;
   asin: string;
