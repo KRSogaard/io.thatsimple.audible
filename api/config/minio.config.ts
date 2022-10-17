@@ -33,5 +33,31 @@ export const MiniIOClient = (): Minio.Client => {
     secretKey: secretKey,
   });
 
+  minioClient.bucketExists('audiobook-images').then(async (exists) => {
+    if (!exists) {
+      logger.info('Bucket "audiobook-images" doesn\'t exist. Creating it');
+      await minioClient.makeBucket('audiobook-images', 'us-east-1');
+    }
+  });
+
+  minioClient.bucketExists('audible-webcache').then(async (exists) => {
+    if (!exists) {
+      logger.info('Bucket "audible-webcache" doesn\'t exist. Creating it');
+      await minioClient.makeBucket('audible-webcache', 'us-east-1');
+      minioClient.setBucketLifecycle('audible-webcache', {
+        Rule: [
+          {
+            ID: 'audible-webcache-purge-10-days',
+            Expiration: {
+              Days: 10,
+            },
+            Prefix: '',
+            Status: 'Enabled',
+          },
+        ],
+      });
+    }
+  });
+
   return minioClient;
 };

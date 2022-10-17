@@ -12,6 +12,8 @@ function HomePage() {
   const audibleService = new AudibleService();
   const [showType, setShowType] = useState(1);
   const [myBooks, setMyBooks] = useState<number[]>([]);
+  const [archived, setArchived] = useState<number[]>([]);
+  const [allSeries, setAllSeries] = useState<SeriesDataResponse[]>([]);
   const [series, setSeries] = useState<SeriesDataResponse[]>([]);
   const [completedSeries, setCompletedSeries] = useState<SeriesDataResponse[]>([]);
   const [archivedSeries, setArchivedSeries] = useState<SeriesDataResponse[]>([]);
@@ -24,29 +26,49 @@ function HomePage() {
       }
 
       const myData = await audibleService.getMyData();
+      console.log(myData);
       setMyBooks(myData.myBooks);
+      setAllSeries(myData.series);
+      setArchived(myData.archivedSeries);
 
-      let activeSeries: SeriesDataResponse[] = [];
-      let completeSeries: SeriesDataResponse[] = [];
-      let archivedSeries: SeriesDataResponse[] = [];
-      myData.series.forEach((s: SeriesDataResponse) => {
-        if (myData.archivedSeries.includes(s.id)) {
-          archivedSeries.push(s);
-        } else {
-          if (s.books.filter((b) => !myData.myBooks.includes(b.id)).length === 0) {
-            completeSeries.push(s);
-          } else {
-            activeSeries.push(s);
-          }
-        }
-      });
-
-      setSeries(activeSeries);
-      setArchivedSeries(archivedSeries);
-      setCompletedSeries(completeSeries);
+      console.log('archivedSeries', archived);
     }
     fetchData();
   }, []);
+
+  useEffect(() => {
+    sortSeries();
+  }, [allSeries, myBooks, archived]);
+
+  const isArchived = (seriesId: number): boolean => {
+    return archived.some((s: number) => s === seriesId);
+  };
+
+  const isMyBook = (bookId: number): boolean => {
+    return myBooks.some((b) => b === bookId);
+  };
+
+  const sortSeries = () => {
+    let activeSeries: SeriesDataResponse[] = [];
+    let completeSeries: SeriesDataResponse[] = [];
+    let archivedSeries: SeriesDataResponse[] = [];
+
+    allSeries.forEach((s: SeriesDataResponse) => {
+      if (isArchived(s.id)) {
+        archivedSeries.push(s);
+      } else {
+        if (s.books.filter((b) => !isMyBook(b.id)).length === 0) {
+          completeSeries.push(s);
+        } else {
+          activeSeries.push(s);
+        }
+      }
+    });
+
+    setSeries(activeSeries);
+    setArchivedSeries(archivedSeries);
+    setCompletedSeries(completeSeries);
+  };
 
   const changeArchiveStatus = async (seriesId: number, archived: boolean): Promise<void> => {
     console.log('changeArchiveStatus', seriesId, archived);
