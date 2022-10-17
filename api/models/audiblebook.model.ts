@@ -45,3 +45,7 @@ export interface AudibleCategory {
   name: string;
   link: string;
 }
+
+export interface AudibleSeriesWithBooks extends AudibleSeries {
+  bookIds: number[];
+}

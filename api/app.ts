@@ -6,6 +6,7 @@ import { ImageController } from './controller/image.controller';
 import { UserController } from './controller/user.controller';
 import { AudibleUserService } from './service/user.service';
 import { AudibleController } from './controller/audible.controller';
+var cors = require('cors');
 
 class App {
   express: express.Application;
@@ -17,26 +18,36 @@ class App {
 
   protectedPaths = [
     {
-      startsWith: true,
-      path: '/api/image',
-      method: 'GET',
-    },
-    {
+      startsWith: false,
       path: '/api/user',
       method: 'GET',
     },
     {
+      startsWith: false,
       path: '/api/book',
       method: 'POST',
     },
+    {
+      startsWith: false,
+      path: '/api/my-series',
+      method: 'GET',
+    },
+    {
+      startsWith: true,
+      path: '/api/user/archive/',
+      method: 'POST',
+    },
+    {
+      startsWith: true,
+      path: '/api/user/archive/',
+      method: 'DELETE',
+    },
+    {
+      startsWith: false,
+      path: '/api/user/jobs',
+      method: 'GET',
+    },
   ];
-
-  /* Swagger files start */
-  // private swaggerFile: any = (process.cwd()+"/swagger/swagger.json");
-  // private swaggerData: any = fs.readFileSync(this.swaggerFile, 'utf8');
-  // private customCss: any = fs.readFileSync((process.cwd()+"/swagger/swagger.css"), 'utf8');
-  // private swaggerDocument = JSON.parse(this.swaggerData);
-  /* Swagger files end */
 
   constructor() {
     this.express = express();
@@ -52,6 +63,7 @@ class App {
 
   // Configure Express middleware.
   private middleware(): void {
+    this.express.use(cors());
     this.express.use(bodyParser.json());
     this.express.use(bodyParser.urlencoded({ extended: false }));
     this.express.use(express.static(path.join(__dirname, '../ui/build')));
@@ -70,6 +82,7 @@ class App {
       let token = null;
       if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
         token = req.headers.authorization.substring(7);
+        this.logger.debug('Token: ' + token);
 
         let user = await this.userService.getUserByToken(token);
         if (!user) {
@@ -92,40 +105,20 @@ class App {
   }
 
   private routes(): void {
-    // this.express.get('/api/test', async (req, res) => {
-    //   this.logger.info('Testing: Parsing book');
-    //   let audibleService = new AudibleManagementService();
-
-    //   let testBook1 = 'https://www.audible.com/pd/Lord-January-Audiobook/B09PNVB5FN';
-    //   let testBook2 = 'https://www.audible.com/pd/Fairy-Tale-Audiobook/B09R62PV4B';
-    //   let testBook3 = 'https://www.audible.com/pd/The-Sandman-Act-III-Audiobook/B0BFK1K36D';
-    //   let testBook4 = 'https://www.audible.com/pd/Harry-Potter-and-the-Sorcerers-Stone-Book-1-Audiobook/B017V4IM1G';
-    //   let testBook5 = 'https://www.audible.com/pd/Harry-Potter-A-History-of-Magic-Audiobook/B07FMMSF5H';
-    //   let testBook6 = 'https://www.audible.com/pd/Edens-Gate-The-Scourge-Audiobook/B09L1Y7MKP';
-    //   let testBook7 = 'https://www.audible.com/pd/The-Tricksters-Tale-Audiobook/B09YYZMNBL';
-    //   let testBook8 = 'https://www.audible.com/pd/1-in-Customer-Service-Audiobook/B07YL79YNK';
-    //   let testBook9 = 'https://www.audible.com/pd/Bio-Dungeon-Omnibus-Audiobook/B0B2TT3CBV';
-
-    //   let testSeries1 = 'https://www.audible.com/series/Wizarding-World-Audiobooks/B07CM5ZDJL';
-    //   let testSeries2 = 'https://www.audible.com/series/Edens-Gate-Audiobooks/B074GFN35N';
-    //   let testSeries3 = 'https://www.audible.com/series/The-Tricksters-Tale-Audiobooks/B09Z28LGW6';
-    //   let testSeries4 = 'https://www.audible.com/series/The-Adventures-of-Tom-Stranger-Interdimensional-Insurance-Agent-Audiobooks/B0793R8X2P';
-    //   let testSeries5 = 'https://www.audible.com/series/The-Bodys-Dungeon-Audiobooks/B089WHL4WV';
-
-    //   res.json({
-    //     //book: Parser.parseBook(await Download.downloadHtml("https://www.audible.com/pd/The-Sandman-Act-III-Audiobook/B0BFK1K36D")),
-    //     series: Parser.parseSeries(await Download.downloadHtml(testSeries1)),
-    //   });
-
-    //   //this.saveController.getTasks().then(data => res.json(data));
-    // });
-
     this.express.get('/api/image/:bookId.jpg', async (req, res) => {
       this.imageController.getImage(req.params.bookId, res);
     });
 
     this.express.post('/api/user', async (req, res) => {
       this.userController.createUser(req.body, res);
+    });
+
+    this.express.post('/api/user/archive/:seriesId', async (req: any, res: any) => {
+      this.userController.archiveSeries(req.user, req.params.seriesId, res);
+    });
+
+    this.express.delete('/api/user/archive/:seriesId', async (req: any, res: any) => {
+      this.userController.unarchiveSeries(req.user, req.params.seriesId, res);
     });
 
     this.express.get('/api/user', async (req: any, res) => {
@@ -140,25 +133,17 @@ class App {
       this.audibleService.requestBookDownload(req.user, req.body?.bookUrl, res);
     });
 
-    // this.express.post('/api/saves', (req, res) => {
-    //     console.log(req.body);
-    //     this.saveController.createTask(req.body.task).then(data => res.json(data));
-    // });
+    this.express.get('/api/my-series', async (req: any, res) => {
+      this.audibleService.getSeriesWithBooks(req.user, res);
+    });
 
-    // this.express.delete('/api/saves/:id', (req, res) => {
-    //     this.saveController.deleteTask(req.params.id).then(data => res.json(data));
-    // });
-
-    // this.express.get("/", (req, res, next) => {
-    //     res.sendFile(path.join(__dirname, '../ui/build/index.html'));
-    // });
-
-    // swagger docs
-    //this.express.use('/api/docs', swaggerUi.serve, swaggerUi.setup(this.swaggerDocument, null, null, this.customCss));
+    this.express.get('/api/user/jobs', async (req: any, res) => {
+      this.userController.getCurrentJobs(req.user, res);
+    });
 
     // handle undefined routes
     this.express.use('*', (req, res, next) => {
-      res.send('Make sure url is correct!!!');
+      res.status(404).send('Not Found');
     });
   }
 }

@@ -1,26 +1,37 @@
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import Home from './components/Home'
-import {
-  BrowserRouter,
-  Routes,
-  Route
-} from "react-router-dom";
+import CssBaseline from '@mui/material/CssBaseline';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import ImportPage from './pages/ImportPage';
+
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 function App() {
-
-  return(
-   
-    <BrowserRouter>
-      <div>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div className="App">
+        <BrowserRouter>
+          <Header />
+          <div>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/import" element={<ImportPage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
       </div>
-    </BrowserRouter>
-  )
-
+    </ThemeProvider>
+  );
 }
 
 export default App;

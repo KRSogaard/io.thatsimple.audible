@@ -143,6 +143,33 @@ CREATE TABLE IF NOT EXISTS `users_tokens` (
   `user_id` int DEFAULT NULL,
   `token` VARCHAR(128) DEFAULT NULL,
   `created` int DEFAULT NULL,
+  `expires` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`user_id`)
+        REFERENCES `users`(`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `users_archived_series` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `series_id` int DEFAULT NULL,
+  `created` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`user_id`)
+        REFERENCES `users`(`id`)
+        ON DELETE CASCADE,
+  FOREIGN KEY (`series_id`)
+        REFERENCES `series`(`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `users_jobs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `created` int DEFAULT NULL,
+  `type` VARCHAR(128) DEFAULT NULL,
+  `payload` VARCHAR(512) DEFAULT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`user_id`)
         REFERENCES `users`(`id`)

@@ -41,7 +41,7 @@ export class AudibleUserService {
     return results.insertId;
   }
 
-  async verifyUser(username: string, password: string): Promise<string> {
+  async verifyUser(username: string, password: string): Promise<TokenResponse> {
     this.logger.info('Verifying user: ' + username);
     let user = await this.getUserByName(username);
     if (user) {
@@ -49,9 +49,12 @@ export class AudibleUserService {
       this.logger.info('Hash', passwordHash);
       if (passwordHash === user.password) {
         let token = UserUtil.genRandomString(32);
-        let sql = 'INSERT INTO `users_tokens` (`user_id`, `token`, `created`) VALUES (?, ?, ?);';
-        await mysql.runQuery(sql, [user.id, token, TimeUtil.getNowTimestamp()]);
-        return token;
+        let sql = 'INSERT INTO `users_tokens` (`user_id`, `token`, `created`, `expires`) VALUES (?, ?, ?, ?);';
+        await mysql.runQuery(sql, [user.id, token, TimeUtil.getNowTimestamp(), TimeUtil.getNowTimestamp() + this.tokenMaxAge]);
+        return {
+          token: token,
+          expires: TimeUtil.getNowTimestamp() + this.tokenMaxAge,
+        };
       }
     }
     return null;
@@ -60,14 +63,14 @@ export class AudibleUserService {
   async getUserByToken(token: string): Promise<UserWithPassword> {
     await this.deleteOldTokens();
     this.logger.info('Getting user by token: ' + token);
-    let sql = 'SELECT u.* FROM `users` AS u LEFT JOIN `users_tokens` AS t ON u.id = t.user_id WHERE t.token = ? AND t.created > ?';
-    let results = await mysql.runQuery(sql, [token, TimeUtil.getNowTimestamp() - this.tokenMaxAge]);
+    let sql = 'SELECT u.* FROM `users` AS u LEFT JOIN `users_tokens` AS t ON u.id = t.user_id WHERE t.token = ? AND t.expires  >= ?';
+    let results = await mysql.runQuery(sql, [token, TimeUtil.getNowTimestamp()]);
 
     return this.parseUser(results);
   }
 
   async deleteOldTokens(): Promise<any> {
-    await mysql.runQuery('DELETE FROM `users_tokens` WHERE `created` < ?', [TimeUtil.getNowTimestamp() - this.tokenMaxAge]);
+    await mysql.runQuery('DELETE FROM `users_tokens` WHERE `expires` < ?', [TimeUtil.getNowTimestamp()]);
   }
 
   async getUserById(userId: number): Promise<UserWithPassword> {
@@ -97,4 +100,75 @@ export class AudibleUserService {
     }
     return null;
   }
+
+  async getMyBooks(userId: number): Promise<number[]> {
+    this.logger.info('Getting books for user: ' + userId);
+    let sql = 'SELECT b.book_id FROM `users_books` AS b WHERE b.user_id = ?';
+    let results = await mysql.runQuery(sql, [userId]);
+    let myBookIds: number[] = [];
+    for (let i = 0; i < results.length; i++) {
+      myBookIds.push(results[i].book_id);
+    }
+    return myBookIds;
+  }
+
+  async archiveSeries(userId: number, seriesId: number): Promise<void> {
+    this.logger.info('Archiving series ' + seriesId + ' for user ' + userId);
+    let sql = 'INSERT INTO `users_archived_series` (`user_id`, `series_id`, `created`) VALUES (?, ?, ?)';
+    await mysql.runQuery(sql, [userId, seriesId, TimeUtil.getNowTimestamp()]);
+  }
+
+  async unarchiveSeries(userId: number, seriesId: number): Promise<void> {
+    this.logger.info('Unarchiving series ' + seriesId + ' for user ' + userId);
+    let sql = 'DELETE FROM `users_archived_series` WHERE `user_id` = ? AND `series_id` = ?';
+    await mysql.runQuery(sql, [userId, seriesId]);
+  }
+
+  async getArchivedSeries(userId: number): Promise<number[]> {
+    this.logger.info('Getting archivied series for user ' + userId);
+    let sql = 'SELECT `series_id` FROM `users_archived_series` WHERE `user_id` = ?';
+    let results = await mysql.runQuery(sql, [userId]);
+    if (!results || results.length === 0) {
+      return [];
+    }
+    return results.map((r) => r.series_id);
+  }
+
+  async createJob(userId: number, type: string, payload: string): Promise<number> {
+    this.logger.info('Creating job for user ' + userId);
+    let sql = 'INSERT INTO `users_jobs` (`user_id`, `created`, `type`, `payload`) VALUES (?, ?, ?, ?)';
+    let result = await mysql.runQuery(sql, [userId, TimeUtil.getNowTimestamp(), type, payload]);
+    return result.insertId;
+  }
+
+  async finishJob(jobId: number): Promise<number> {
+    this.logger.info('Finishing job with id ' + jobId);
+    let sql = 'DELETE FROM `users_jobs` WHERE `id` = ?';
+    let result = await mysql.runQuery(sql, [jobId]);
+    return result.insertId;
+  }
+
+  async getCurrentJobs(userId: number): Promise<Job[]> {
+    this.logger.info('Getting current jobs for user ' + userId);
+    let sql = 'SELECT * FROM `users_jobs` WHERE `user_id` = ?';
+    let results = await mysql.runQuery(sql, [userId]);
+    return results.map((r) => {
+      return {
+        id: r.id,
+        created: r.created,
+        type: r.type,
+        payload: r.payload,
+      };
+    });
+  }
+}
+
+export interface TokenResponse {
+  token: string;
+  expires: number;
+}
+export interface Job {
+  id: number;
+  created: number;
+  description: string;
 }

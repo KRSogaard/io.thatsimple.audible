@@ -1,5 +1,13 @@
 import { APILogger } from '../logger/api.logger';
-import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
+import {
+  AudibleBook,
+  AudibleSeries,
+  AudibleAuthor,
+  AudibleSeriesBook,
+  AudibleNarrator,
+  AudibleCategory,
+  AudibleSeriesWithBooks,
+} from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
 import * as timeUtil from '../util/time.util';
 
@@ -18,28 +26,31 @@ export class AudibleSeriesService {
   async getSeries(id: string): Promise<AudibleSeries> {
     let sql = 'SELECT * FROM `series` ' + 'WHERE `series`.id = ?';
     let results = await mysql.runQuery(sql, [id]);
-    return this.parseSeriesResult(results);
+    return this.parseSeriesResults(results);
   }
 
   async getSeriesASIN(asin: string): Promise<AudibleSeries> {
     let sql = 'SELECT * FROM `series` ' + 'WHERE `series`.asin = ?';
     let results = await mysql.runQuery(sql, [asin]);
-    return this.parseSeriesResult(results);
+    return this.parseSeriesResults(results);
   }
 
-  parseSeriesResult(results: any): AudibleSeries {
+  parseSeriesResults(results: any): AudibleSeries {
     if (!results || results.length === 0) {
       return null;
     }
+    return this.parseSeriesResult(results[0]);
+  }
 
+  parseSeriesResult(result: any): AudibleSeries {
     return {
-      id: results[0].id,
-      name: results[0].name,
-      asin: results[0].asin,
-      link: results[0].link,
-      summary: results[0].summary,
-      lastUpdated: timeUtil.dateFromTimestamp(results[0].last_updated),
-      shouldDownload: results[0].should_download === 1,
+      id: result.id,
+      name: result.name,
+      asin: result.asin,
+      link: result.link,
+      summary: result.summary,
+      lastUpdated: timeUtil.dateFromTimestamp(result.last_updated),
+      shouldDownload: result.should_download === 1,
     };
   }
 
@@ -103,5 +114,27 @@ export class AudibleSeriesService {
     this.logger.debug('Updating series ' + seriesId + ' last updated time');
     let sql = 'UPDATE `series` SET `last_updated` = ? WHERE `id` = ?';
     await mysql.runQuery(sql, [Math.round(Date.now() / 1000), seriesId]);
+  }
+
+  async getSeriesFromBooks(bookIds: number[]): Promise<AudibleSeriesWithBooks[]> {
+    let sql = 'SELECT * FROM `series` AS s WHERE (SELECT COUNT(*) FROM `series_books` WHERE series_id = s.id AND book_id IN (?))';
+    let results = await mysql.runQuery(sql, [bookIds]);
+    let series: AudibleSeriesWithBooks[] = [];
+    await Promise.all(
+      results.map(async (result: any) => {
+        let s = this.parseSeriesResult(result) as AudibleSeriesWithBooks;
+        s.bookIds = await this.getBookIdsForSeries(s.id);
+        series.push(s);
+      })
+    );
+    return series;
+  }
+
+  async getBookIdsForSeries(seriesId: number): Promise<number[]> {
+    let sql = 'SELECT * FROM `series_books` WHERE `series_id` = ?';
+    let results = await mysql.runQuery(sql, [seriesId]);
+    return results.map((result: any) => {
+      return result.book_id;
+    });
   }
 }

@@ -159,12 +159,22 @@ export const parseSeries = (htmlDom: string): ParseSeries => {
       bookNumber = text.slice(text.indexOf('book') + 'book'.length + 1).trim();
     }
 
+    let title = dom.find('h3').text().trim();
+    logger.info('Title: ' + title);
+    if (!title || title.length === 0) {
+      title = 'Unknown title';
+    }
+
     let runtimeSeconds = null;
     text = dom.find('.runtimeLabel').text().trim();
     if (text && text.length > 0 && text.includes('Length:')) {
-      text = text.slice(text.indexOf('Length:') + 'Length:'.length + 1).trim();
-      let runtime = text.replace('hrs', 'h').replace('mins', 'm').replace('and', '').trim();
-      runtimeSeconds = timespan.parse(runtime);
+      try {
+        text = text.slice(text.indexOf('Length:') + 'Length:'.length + 1).trim();
+        let runtime = text.replace('hrs', 'h').replace('mins', 'm').replace('and', '').trim();
+        runtimeSeconds = timespan.parse(runtime);
+      } catch (e) {
+        logger.error('Failed to parse runtime', e, dom.find('.runtimeLabel').text().trim());
+      }
     }
 
     let releaseDate = null;
@@ -180,6 +190,7 @@ export const parseSeries = (htmlDom: string): ParseSeries => {
       bookNumber: bookNumber,
       runtime: runtimeSeconds,
       releaseDate: releaseDate,
+      title: title,
     });
   });
 

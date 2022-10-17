@@ -9,7 +9,6 @@ export class ImageController {
   }
 
   async getImage(bookId: string, res): Promise<void> {
-    this.logger.info('ImageController: GetImage', null);
     let imageStream = await StorageService.getImage(bookId);
     if (imageStream) {
       imageStream.pipe(res);

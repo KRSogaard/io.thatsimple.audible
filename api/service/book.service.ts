@@ -22,12 +22,19 @@ export class AudibleBookService {
     return await this.parseBookResult(results);
   }
 
-  async getBooksByUser(userId: number) {
+  async getBooksIdsByUser(userId: number) {
     let results = await mysql.runQuery(
-      'SELECT `books`.* FROM `books` ' + 'LEFT JOIN `users_books` ON `users_books`.book_id = `books`.id ' + 'WHERE `users_books`.user_id = ?',
+      'SELECT `books`.id FROM `books` ' + 'LEFT JOIN `users_books` ON `users_books`.book_id = `books`.id ' + 'WHERE `users_books`.user_id = ?',
       [userId]
     );
-    return results;
+    return results.map((result) => result.id);
+  }
+
+  async bulkGetBooks(ids: number[]): Promise<AudibleBook[]> {
+    this.logger.info('Getting books by IDs: ' + ids);
+    let books = [];
+    await Promise.all(ids.map(async (id) => books.push(await this.getBook(id))));
+    return books;
   }
 
   async parseBookResult(results: any): Promise<AudibleBook> {
@@ -56,7 +63,7 @@ export class AudibleBookService {
 
     let authors = [];
     let authorResult = await mysql.runQuery(
-      'SELECT `authors`.* FROM `authors` ' + 'LEFT JOIN `books_authors` ON `books_authors`.author_id = `authors`.id ' + 'WHERE `books_authors`.book_id = ?',
+      'SELECT `authors`.* FROM `authors` LEFT JOIN `books_authors` ON `books_authors`.author_id = `authors`.id WHERE `books_authors`.book_id = ?',
       [results[0].id]
     );
     for (let author of authorResult) {
@@ -65,6 +72,18 @@ export class AudibleBookService {
         name: author.name,
         asin: author.asin,
         link: author.link,
+      });
+    }
+
+    let narrators = [];
+    let narratorsResult = await mysql.runQuery(
+      'SELECT n.* FROM `narrators` AS n LEFT JOIN `narrators_books` AS nb ON nb.narrator_id = n.id WHERE nb.book_id = ?',
+      [results[0].id]
+    );
+    for (let narrator of narratorsResult) {
+      narrators.push({
+        id: narrator.id,
+        name: narrator.name,
       });
     }
 
@@ -85,6 +104,7 @@ export class AudibleBookService {
       lastUpdated: timeUtil.dateFromTimestamp(results[0].last_updated),
       series: series,
       authors: authors,
+      narrators: narrators,
       tags: tags,
     };
   }

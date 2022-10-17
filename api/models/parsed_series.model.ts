@@ -8,6 +8,7 @@ export interface ParseSeries {
 
 export interface ParseSeriesBook {
   bookNumber: string;
+  title: string;
   asin: string;
   link: string;
   releaseDate?: Date;
