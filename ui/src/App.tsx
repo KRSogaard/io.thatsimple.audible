@@ -1,36 +1,56 @@
 import React from 'react';
 import './App.css';
-import CssBaseline from '@mui/material/CssBaseline';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import SeriesPage from './pages/SeriesPage';
+import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ImportPage from './pages/ImportPage';
-
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+import RegisterPage from './pages/RegisterPage';
+import HomePage from './pages/HomePage';
+import RequireAuth from './components/RequireAuth';
+import 'antd/dist/antd.css';
+import { Breadcrumb, Layout, Menu } from 'antd';
+import { Helmet } from 'react-helmet-async';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <div className="App">
-        <BrowserRouter>
-          <Header />
-          <div>
+    <div className="App">
+      <BrowserRouter>
+        <Helmet titleTemplate="%s - audible.thatsimple.io" defaultTitle="audible.thatsimple.io">
+          <meta name="description" content="Audible series manager" />
+        </Helmet>
+
+        <Layout style={{ minHeight: '100vh' }}>
+          <Layout.Header>
+            <Header />
+          </Layout.Header>
+          <Layout.Content>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/import" element={<ImportPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/series"
+                element={
+                  <RequireAuth>
+                    <SeriesPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/import"
+                element={
+                  <RequireAuth>
+                    <ImportPage />
+                  </RequireAuth>
+                }
+              />
+              <Route path="/signin" element={<LoginPage />} />
+              <Route path="/signup" element={<RegisterPage />} />
             </Routes>
-          </div>
-        </BrowserRouter>
-      </div>
-    </ThemeProvider>
+          </Layout.Content>
+          <Layout.Footer>Footer</Layout.Footer>
+        </Layout>
+      </BrowserRouter>
+    </div>
   );
 }
 

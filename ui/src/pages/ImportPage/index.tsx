@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useInterval } from 'usehooks-ts';
-import { AudibleService, Job } from '../services/AudibleService';
+import AudibleService, { Job } from '../../services/AudibleService';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Button, TextField, Typography, Paper, Card, CardContent, CardHeader, Link, ListItemButton } from '@mui/material';
 import List from '@mui/material/List';
@@ -8,14 +8,13 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
-import Released from '../components/HomePage/Released';
 import Parser from '@gregoranders/csv';
-import JobItem from '../components/ImportPage/JobItem';
+import JobItem from './components/JobItem';
+import Released from '../../components/Released';
 
 function ImportPage() {
   const siteMap =
     '{"_id":"audible","startUrl":["https://www.audible.com/library/audiobooks?pageSize=50"],"selectors":[{"id":"pagination","parentSelectors":["_root","pagination"],"paginationType":"auto","selector":".nextButton:not(.bc-button-disabled) a","type":"SelectorPagination"},{"id":"books","parentSelectors":["pagination"],"type":"SelectorElement","selector":"div.adbl-library-content-row","multiple":true},{"id":"title","parentSelectors":["books"],"type":"SelectorText","selector":"span.bc-size-headline3","multiple":false,"regex":""},{"id":"author","parentSelectors":["books"],"type":"SelectorText","selector":".authorLabel a","multiple":false,"regex":""},{"id":"book-link","parentSelectors":["books"],"type":"SelectorLink","selector":".bc-list-item > a","multiple":false}]}';
-  const audibleService = new AudibleService();
   const [importText, setImportText] = useState('');
   const [delay, setDelay] = useState<number>(10000);
   const [canImport, setCanImport] = useState(false);
@@ -23,7 +22,7 @@ function ImportPage() {
 
   useEffect(() => {
     async function _() {
-      setJobs(await audibleService.getJobs());
+      setJobs(await AudibleService.getJobs());
     }
     _();
   }, []);
@@ -33,7 +32,7 @@ function ImportPage() {
   }, [importText]);
 
   useInterval(async () => {
-    setJobs(await audibleService.getJobs());
+    setJobs(await AudibleService.getJobs());
   }, delay);
 
   const startImport = async () => {
@@ -48,7 +47,7 @@ function ImportPage() {
         return;
       }
 
-      await audibleService.requestDownload(row[6].split('?')[0]);
+      await AudibleService.requestDownload(row[6].split('?')[0]);
       console.log('Requested download of book', row[6]);
     });
     setImportText('');

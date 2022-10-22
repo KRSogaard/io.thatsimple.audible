@@ -6,7 +6,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
-import Released from '../HomePage/Released';
+import Released from '../../../components/Released';
 import Parser from '@gregoranders/csv';
 
 const TimeSpan = (props: any) => {

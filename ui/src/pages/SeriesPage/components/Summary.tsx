@@ -1,7 +1,5 @@
 import React from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import { AudibleService } from '../../services/AudibleService';
-import { Typography, Box, Paper } from '@mui/material';
+import { Typography } from '@mui/material';
 
 const Summary = (props: any) => {
   let { text } = props;

@@ -9,3 +9,9 @@ export interface UserWithPassword extends User {
   password: string;
   password_salt?: string;
 }
+
+export interface RegisterUser {
+  username: string;
+  password: string;
+  email: string;
+}

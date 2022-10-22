@@ -1,8 +1,8 @@
 import React from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
-import { AudibleService } from '../../services/AudibleService';
+import AudibleService from '../../../services/AudibleService';
 import { Typography, Link, Paper } from '@mui/material';
-import Released from './Released';
+import Released from '../../../components/Released';
 import Summary from './Summary';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
@@ -10,7 +10,6 @@ import TimeSpan from './TimeSpan';
 
 const Book = (props: any) => {
   let { book, myBooks } = props;
-  let audibleService = new AudibleService();
 
   let hasBook = myBooks.includes(book.id);
 
@@ -20,7 +19,7 @@ const Book = (props: any) => {
         <Paper>
           <Grid container>
             <Grid xs={'auto'}>
-              <img src={audibleService.getImageUrl(book.asin)} alt={'Image for ' + book.asin} width={151} height={151} />
+              <img src={AudibleService.getImageUrl(book.asin)} alt={'Image for ' + book.asin} width={151} height={151} />
             </Grid>
             <Grid xs>
               <Typography variant="h5">

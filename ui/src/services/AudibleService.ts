@@ -1,18 +1,24 @@
-export class AudibleService {
+class AudibleService {
   private userToken: string | null;
   private userTokenExpires: number | null;
+  private me: User | null;
   private baseUri = 'http://localhost:3080/api';
 
   public constructor() {
     this.userToken = null;
     this.userTokenExpires = null;
+    this.me = null;
 
     if (localStorage.getItem('userToken')) {
       this.userToken = localStorage.getItem('userToken');
       this.userTokenExpires = Number.parseInt(localStorage.getItem('userTokenExpires') as string);
+      let me = localStorage.getItem('me');
+      this.me = me ? JSON.parse(me) : null;
     } else if (sessionStorage.getItem('userToken')) {
       this.userToken = sessionStorage.getItem('userToken');
       this.userTokenExpires = Number.parseInt(sessionStorage.getItem('userTokenExpires') as string);
+      let me = sessionStorage.getItem('me');
+      this.me = me ? JSON.parse(me) : null;
     }
   }
 
@@ -47,12 +53,15 @@ export class AudibleService {
         console.log('Json: ', responseJson);
         this.userToken = responseJson.token;
         this.userTokenExpires = responseJson.expires;
+        this.me = await this.getFetchMe();
         if (remember) {
           localStorage.setItem('userToken', this.userToken as string);
           localStorage.setItem('userTokenExpires', (this.userTokenExpires as number).toString());
+          localStorage.setItem('me', JSON.stringify(this.me));
         } else {
           sessionStorage.setItem('userToken', this.userToken as string);
           sessionStorage.setItem('userTokenExpires', (this.userTokenExpires as number).toString());
+          sessionStorage.setItem('me', JSON.stringify(this.me));
         }
         return true;
       }
@@ -62,10 +71,42 @@ export class AudibleService {
     return false;
   }
 
+  public async register(username: string, password: string, email: string): Promise<boolean> {
+    const response = await fetch(this.baseUri + '/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password, email: email }),
+    });
+    try {
+      if (response.status === 200) {
+        return true;
+      }
+    } catch (e) {
+      console.error('Register Error: ', e);
+    }
+    return false;
+  }
+
+  public async getFetchMe(): Promise<User> {
+    const response = await fetch(this.baseUri + '/user', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.getToken() },
+    });
+    return await response.json();
+  }
+
+  public getMe(): User {
+    if (!this.me) {
+      throw new Error('Not authenticated');
+    }
+    return this.me as User;
+  }
+
   public async logout(): Promise<void> {
     this.userToken = null;
     localStorage.removeItem('userToken');
     sessionStorage.removeItem('userToken');
+    sessionStorage.removeItem('me');
   }
 
   public async getMyData(): Promise<MyData> {
@@ -156,6 +197,8 @@ export class AudibleService {
   }
 }
 
+export default new AudibleService();
+
 export interface MyData {
   myBooks: number[];
   archivedSeries: number[];
@@ -197,4 +240,11 @@ export interface Job {
   created: number;
   type: string;
   payload: string;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  created: number;
 }

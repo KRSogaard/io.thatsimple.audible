@@ -1,6 +1,6 @@
 import { APILogger } from '../logger/api.logger';
 import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
-import { User, UserWithPassword } from '../models/user.model';
+import { User, UserWithPassword, RegisterUser } from '../models/user.model';
 import * as mysql from '../util/MySQL.util';
 import * as TimeUtil from '../util/time.util';
 import * as UserUtil from '../util/User.util';
@@ -25,9 +25,9 @@ export class AudibleUserService {
     }
   }
 
-  async createUser(user: UserWithPassword): Promise<number> {
+  async createUser(user: RegisterUser): Promise<number> {
     this.logger.info('Creating user: ' + user.username);
-    let userExisting = await this.getUserByName(user.username);
+    let userExisting = await this.getUserByEmail(user.email);
     if (userExisting) {
       this.logger.debug('User already exists');
       return userExisting.id;
@@ -41,9 +41,9 @@ export class AudibleUserService {
     return results.insertId;
   }
 
-  async verifyUser(username: string, password: string): Promise<TokenResponse> {
-    this.logger.info('Verifying user: ' + username);
-    let user = await this.getUserByName(username);
+  async verifyUser(email: string, password: string): Promise<TokenResponse> {
+    this.logger.info('Verifying user email: ' + email);
+    let user = await this.getUserByEmail(email);
     if (user) {
       let passwordHash = UserUtil.sha512(password, user.password_salt);
       this.logger.info('Hash', passwordHash);
@@ -84,6 +84,13 @@ export class AudibleUserService {
     this.logger.info('Getting user by name: ' + username);
     let sql = 'SELECT * FROM `users` WHERE `username` = ?';
     let results = await mysql.runQuery(sql, [username]);
+    return this.parseUser(results);
+  }
+
+  async getUserByEmail(email: string): Promise<UserWithPassword> {
+    this.logger.info('Getting user by email: ' + email);
+    let sql = 'SELECT * FROM `users` WHERE `email` = ?';
+    let results = await mysql.runQuery(sql, [email]);
     return this.parseUser(results);
   }
 

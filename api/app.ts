@@ -70,12 +70,16 @@ class App {
     this.express.use(async (req: Record<string, any>, res, next) => {
       let isAuthRequired = false;
       this.protectedPaths.forEach((protectedPath) => {
-        if (
-          (!protectedPath.startsWith && protectedPath.path.toLowerCase() === req.path.toLowerCase()) ||
-          (protectedPath.startsWith && req.path.startsWith(protectedPath.path) && protectedPath.method.toLowerCase() === req.method.toLowerCase())
-        ) {
+        if (!protectedPath.method.toLowerCase().includes(req.method.toLowerCase())) {
+          return;
+        }
+
+        if (protectedPath.startsWith) {
+          if (req.path.startsWith(protectedPath.path)) {
+            isAuthRequired = true;
+          }
+        } else if (req.path === protectedPath.path) {
           isAuthRequired = true;
-          this.logger.info('Auth required for ' + req.path);
         }
       });
 
@@ -109,10 +113,6 @@ class App {
       this.imageController.getImage(req.params.bookId, res);
     });
 
-    this.express.post('/api/user', async (req, res) => {
-      this.userController.createUser(req.body, res);
-    });
-
     this.express.post('/api/user/archive/:seriesId', async (req: any, res: any) => {
       this.userController.archiveSeries(req.user, req.params.seriesId, res);
     });
@@ -123,6 +123,10 @@ class App {
 
     this.express.get('/api/user', async (req: any, res) => {
       this.userController.getMe(req.user, res);
+    });
+
+    this.express.post('/api/user', async (req: any, res) => {
+      this.userController.registerUser(req.body?.username, req.body?.password, req.body?.email, res);
     });
 
     this.express.post('/api/auth', async (req, res) => {

@@ -3,7 +3,7 @@ import * as pino from 'pino';
 // const logger = pino(pretty());
 
 const logger = pino.default({
-  level: 'debug',
+  level: 'trace',
   transport: {
     target: 'pino-pretty',
     options: {

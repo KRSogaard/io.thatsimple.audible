@@ -1,46 +1,76 @@
 import React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import { AudibleService } from '../services/AudibleService';
+import AudibleService, { User } from '../services/AudibleService';
+import { Menu, Col, Row } from 'antd';
+import { HomeOutlined, ImportOutlined, UnorderedListOutlined, LoginOutlined, UserAddOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
+import Gravatar from 'react-gravatar';
 
 const Header = () => {
-  const audibleService = new AudibleService();
+  const [me, setMe] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    if (AudibleService.isAuthenticated()) {
+      setMe(AudibleService.getMe());
+    }
+  }, []);
+
+  const handleLogout = (e: any) => {
+    e.preventDefault();
+    AudibleService.logout();
+    window.location.href = '/';
+  };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
-            <MenuIcon />
-          </IconButton>
-
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Button href="/" sx={{ my: 2, color: 'white', display: 'block' }}>
-              My AudioBooks
-            </Button>
-            <Button href="/import" sx={{ my: 2, color: 'white', display: 'block' }}>
-              Import my AudioBooks
-            </Button>
-          </Box>
-          {!audibleService.isAuthenticated() ? (
+    <Row>
+      <Col flex="auto">
+        <Menu mode="horizontal" theme="dark" defaultSelectedKeys={['home']}>
+          <Menu.Item key="home" icon={<HomeOutlined />}>
+            <Link to={'/'}>Home</Link>
+          </Menu.Item>
+          <Menu.Item key="series" icon={<UnorderedListOutlined />}>
+            <Link to={'/series'}>My AudioBooks</Link>
+          </Menu.Item>
+          <Menu.Item key="import" icon={<ImportOutlined />}>
+            <Link to={'/import'}>Import my AudioBooks</Link>
+          </Menu.Item>
+        </Menu>
+      </Col>
+      <Col flex="250px">
+        <Menu theme="dark" mode="horizontal">
+          {!AudibleService.isAuthenticated() ? (
             <>
-              <Button href="/login" color="inherit">
-                Login
-              </Button>
-              <Button href="/register" color="inherit">
-                Register
-              </Button>
+              <Menu.Item icon={<LoginOutlined />}>
+                <Link to={'/signin'}>Sign in</Link>
+              </Menu.Item>
+              <Menu.Item icon={<UserAddOutlined />}>
+                <Link to={'/signup'}>Sign up</Link>
+              </Menu.Item>
             </>
           ) : (
-            <>Welcome</>
+            <>
+              <Menu.SubMenu
+                key="SubMenu"
+                title={
+                  <Row>
+                    <Col flex="6">
+                      <Gravatar email={me?.email} rating="pg" default={'retro'} />
+                    </Col>
+                    <Col style={{ paddingLeft: '5px' }} flex="auto">
+                      {me?.username}
+                    </Col>
+                  </Row>
+                }>
+                <Menu.Item icon={<LogoutOutlined />}>
+                  <Link onClick={handleLogout} to={'/signout'}>
+                    Sign out
+                  </Link>
+                </Menu.Item>
+              </Menu.SubMenu>
+            </>
           )}
-        </Toolbar>
-      </AppBar>
-    </Box>
+        </Menu>
+      </Col>
+    </Row>
   );
 };
 
