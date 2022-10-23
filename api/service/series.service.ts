@@ -111,12 +111,18 @@ export class AudibleSeriesService {
   }
 
   async updateSeries(seriesId: number) {
+    if (!seriesId) {
+      throw Error('No series id provided');
+    }
     this.logger.debug('Updating series ' + seriesId + ' last updated time');
     let sql = 'UPDATE `series` SET `last_updated` = ? WHERE `id` = ?';
     await mysql.runQuery(sql, [Math.round(Date.now() / 1000), seriesId]);
   }
 
   async getSeriesFromBooks(bookIds: number[]): Promise<AudibleSeriesWithBooks[]> {
+    if (!bookIds || bookIds.length === 0) {
+      return [];
+    }
     let sql = 'SELECT * FROM `series` AS s WHERE (SELECT COUNT(*) FROM `series_books` WHERE series_id = s.id AND book_id IN (?))';
     let results = await mysql.runQuery(sql, [bookIds]);
     let series: AudibleSeriesWithBooks[] = [];

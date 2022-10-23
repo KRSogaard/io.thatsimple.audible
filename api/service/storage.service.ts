@@ -13,45 +13,12 @@ class StorageService {
   constructor() {
     this.logger = new APILogger();
     this.minioClient = MiniIOClient();
-    this.createBuckets();
-  }
-
-  async createBuckets(): Promise<void> {
-    try {
-      if (!(await this.minioClient.bucketExists(cacheBucket))) {
-        await this.minioClient.makeBucket(cacheBucket, 'us-east-1');
-        await this.minioClient.setBucketLifecycle(cacheBucket, {
-          Rule: [
-            {
-              ID: 'Delete current version after 10 days',
-              Status: 'Enabled',
-              Filter: {
-                Prefix: '',
-              },
-              Expiration: {
-                Days: '10',
-              },
-            },
-          ],
-        });
-      }
-    } catch (error) {
-      this.logger.error('Failed to create webcache bucket', error);
-    }
-
-    try {
-      if (!(await this.minioClient.bucketExists(imageBucket))) {
-        await this.minioClient.makeBucket(imageBucket, 'us-east-1');
-      }
-    } catch (error) {
-      this.logger.error('Failed to create webcache bucket', error);
-    }
   }
 
   async saveWebCache(url: string, html: string): Promise<void> {
     try {
       let filename = this.urlToHash(url);
-      await this.minioClient.putObject(cacheBucket, filename, html);
+      await this.minioClient.putObject(cacheBucket, filename, this.cleanHTML(html));
     } catch (error) {
       this.logger.error('Failed to save webcache', error);
     }
@@ -86,6 +53,10 @@ class StorageService {
   }
 
   urlToHash(url: string): string {
+    if (url.includes('audible.com/pd/')) {
+      // USE ASIN as the hash
+      return 'books-' + url.split('?')[0].split('/').pop() + '.html';
+    }
     return crypto.createHash('md5').update(url.split('?')[0]).digest('hex') + '.html';
   }
 
@@ -119,6 +90,16 @@ class StorageService {
 
   getImageName(bookId: string): string {
     return bookId.toUpperCase() + '.jpg';
+  }
+
+  cleanHTML(html: string): string {
+    // This may take some time, but it will half the size of the cache
+    return html
+      .replace(/<script[^>]*>(?:(?!<\/script>)[^])*<\/script>/g, '')
+      .replace(/<style[^>]*>(?:(?!<\/style>)[^])*<\/style>/g, '')
+      .replace(/<noscript[^>]*>(?:(?!<\/noscript>)[^])*<\/noscript>/g, '')
+      .replace(/<link[^>]*>/g, '')
+      .replace('</link>', '');
   }
 }
 

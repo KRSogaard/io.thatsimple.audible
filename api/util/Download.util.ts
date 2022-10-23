@@ -28,6 +28,7 @@ export const downloadHtml = async (downloadUrl: string): Promise<DownloadReponse
   };
 
   try {
+    logger.trace('Downloading HTML from: ' + downloadUrl + ' with config: ', config);
     const { headers, status, data } = await axios.get(downloadUrl, config);
     logger.debug('Html status: ' + status);
 
@@ -43,7 +44,6 @@ export const downloadHtml = async (downloadUrl: string): Promise<DownloadReponse
         status: status,
       };
     }
-    // This is temp
     await StorageService.saveWebCache(downloadUrl, data);
     // End temp
     return {
@@ -52,6 +52,7 @@ export const downloadHtml = async (downloadUrl: string): Promise<DownloadReponse
       cached: false,
     };
   } catch (error: any) {
+    logger.trace('Error while downloading html: ' + downloadUrl, error);
     if (error.response.status === 404) {
       logger.warn('404 error for ' + downloadUrl);
       return {

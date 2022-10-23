@@ -1,64 +1,64 @@
-import * as pino from 'pino';
-// const pretty = require("pino-pretty");
-// const logger = pino(pretty());
+// import * as pino from 'pino';
 
-const logger = pino.default({
-  level: 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      singleLine: true,
-    },
-  },
-});
+// const logger = pino.default({
+//   level: 'trace',
+//   transport: {
+//     target: 'pino-pretty',
+//     options: {
+//       colorize: true,
+//       singleLine: true,
+//     },
+//   },
+// });
 
 export class APILogger {
-  info(message: string, ...data: any[]) {
+  trace(message: string, ...data: any[]) {
+    return;
     if (data) {
-      logger.info({ ...data }, message);
+      console.log('[TRACE] ' + message, JSON.stringify(data));
     } else {
-      logger.info(message);
+      console.log('[TRACE] ' + message);
     }
   }
 
   debug(message: string, ...data: any[]) {
+    return;
     if (data) {
-      logger.debug({ ...data }, message);
+      console.log('[DEBUG] ' + message, JSON.stringify(data));
     } else {
-      logger.debug(message);
+      console.log('[DEBUG] ' + message);
     }
   }
 
-  trace(message: string, ...data: any[]) {
+  info(message: string, ...data: any[]) {
     if (data) {
-      logger.trace({ ...data }, message);
+      console.info('[INFO] ' + message, JSON.stringify(data));
     } else {
-      logger.trace(message);
+      console.info('[INFO] ' + message);
     }
   }
 
   warn(message: string, ...data: any[]) {
     if (data) {
-      logger.warn({ ...data }, message);
+      console.warn('[WARN] ' + message, JSON.stringify(data));
     } else {
-      logger.warn(message);
+      console.warn('[WARN] ' + message);
     }
   }
 
   error(message: string, ...data: any[]) {
     if (data) {
-      logger.error({ ...data }, message);
+      console.error('[ERROR] ' + message, JSON.stringify(data));
     } else {
-      logger.error(message);
+      console.error('[ERROR] ' + message);
     }
   }
 
   fatal(message: string, ...data: any[]) {
     if (data) {
-      logger.fatal({ ...data }, message);
+      console.error('[FATAL] ' + message, JSON.stringify(data));
     } else {
-      logger.fatal(message);
+      console.error('[FATAL] ' + message);
     }
   }
 }

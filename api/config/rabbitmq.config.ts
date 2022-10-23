@@ -11,15 +11,7 @@ export const RabbitMQConnection = async (): Promise<Connection> => {
   }
   logger = new APILogger();
 
-  if (!process.env.RABBITMQ_HOST) {
-    throw new Error('RABBITMQ_HOST is not defined');
-  }
-  if (!process.env.RABBITMQ_USER) {
-    throw new Error('RABBITMQ_USER is not defined');
-  }
-  if (!process.env.RABBITMQ_PASS) {
-    throw new Error('RABBITMQ_PASS is not defined');
-  }
+  RabbitMQCheck();
 
   const endPoint = process.env.RABBITMQ_HOST;
   const accessKey = process.env.RABBITMQ_USER;
@@ -46,4 +38,16 @@ export const RabbitMQAudibleChannel = (): string => {
     throw new Error('RABBITMQ_AUDIBLE_CHANNEL is not defined');
   }
   return process.env.RABBITMQ_AUDIBLE_CHANNEL;
+};
+
+export const RabbitMQCheck = (): void => {
+  if (!process.env.RABBITMQ_HOST) {
+    throw new Error('RABBITMQ_HOST is not defined');
+  }
+  if (!process.env.RABBITMQ_USER) {
+    throw new Error('RABBITMQ_USER is not defined');
+  }
+  if (!process.env.RABBITMQ_PASS) {
+    throw new Error('RABBITMQ_PASS is not defined');
+  }
 };

@@ -1,10 +1,17 @@
 import * as http from 'http';
 import App from './app';
 import { APILogger } from './logger/api.logger';
-import { RabbitMQConnection, RabbitMQAudibleChannel } from './config/rabbitmq.config';
+import { RabbitMQConnection, RabbitMQAudibleChannel, RabbitMQCheck } from './config/rabbitmq.config';
 import { AudibleManagementService } from './service/audible_management.service';
 import { AudibleUserService } from './service/user.service';
+import { MySQLConnection, MySQLCheck } from './config/mysql.config';
+import { MinIOCheck } from './config/minio.config';
 require('dotenv').config();
+
+// HERE FOR FAST FAILS
+MinIOCheck();
+MySQLCheck();
+RabbitMQCheck();
 
 const port = process.env.PORT || 3080;
 const waitTime = 2000;
@@ -16,6 +23,9 @@ server.listen(port);
 const logger = new APILogger();
 const audibleManagementService = new AudibleManagementService();
 const userService = new AudibleUserService();
+
+logger.info('Creating database connection');
+MySQLConnection();
 
 server.on('listening', function (): void {
   const addr = server.address();
@@ -60,14 +70,16 @@ RabbitMQConnection().then((connection) => {
         let hitAudibleUrl = false;
         try {
           if (obj.type === 'book') {
+            logger.info('Processing book download request', url);
             hitAudibleUrl = await audibleManagementService.downloadBook(url, userId, addToUser, obj.force);
           } else if (obj.type == 'series') {
+            logger.info('Processing series download request', url);
             hitAudibleUrl = await audibleManagementService.downloadSeries(url, userId, obj.force);
           } else {
-            logger.error('Unknown message type', null);
+            logger.error('Unknown message type');
           }
         } catch (error) {
-          logger.error('Failed to parse message, will not retry', data);
+          logger.error('Failed to download, will not retry', error);
         } finally {
           channel.ack(message);
           if (obj.jobId) {

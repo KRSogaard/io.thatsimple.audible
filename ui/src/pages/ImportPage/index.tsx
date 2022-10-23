@@ -55,6 +55,7 @@ function ImportPage() {
 
   if (jobs.length > 0) {
     if (loading) {
+      console.log('Setting loading to false');
       setLoading(false);
     }
     return <Jobs jobs={jobs} />;
