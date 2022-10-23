@@ -34,7 +34,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
   const user = process.env.DB_USER;
   const password = process.env.DB_PASSWORD;
   const name = process.env.DB_NAME;
-  logger.info('Setting up Mysql Connection :::', host, port, user, password, name);
+  logger.info('Setting up Mysql Connection :::', host, port, user, name);
 
   try {
     pool = createPool({

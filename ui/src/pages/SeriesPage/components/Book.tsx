@@ -1,46 +1,54 @@
-import React from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
 import AudibleService from '../../../services/AudibleService';
-import { Typography, Link, Paper } from '@mui/material';
 import Released from '../../../components/Released';
 import Summary from './Summary';
-import DoneIcon from '@mui/icons-material/Done';
-import CloseIcon from '@mui/icons-material/Close';
 import TimeSpan from './TimeSpan';
+import { Row, Col, Typography } from 'antd';
+import { FaAudible } from 'react-icons/fa';
 
 const Book = (props: any) => {
   let { book, myBooks } = props;
 
   let hasBook = myBooks.includes(book.id);
+  const { Text, Link, Title } = Typography;
 
   return (
-    <Grid container>
-      <Grid xs={11} xsOffset={1}>
-        <Paper>
-          <Grid container>
-            <Grid xs={'auto'}>
-              <img src={AudibleService.getImageUrl(book.asin)} alt={'Image for ' + book.asin} width={151} height={151} />
-            </Grid>
-            <Grid xs>
-              <Typography variant="h5">
-                {hasBook ? <DoneIcon color="primary" /> : <CloseIcon color="error" />}
-                {book.title}
-                <Link style={{ marginLeft: '10px' }} href={book.link} target="_blank" rel="noreferrer">
-                  <Typography variant="caption">to audible</Typography>
-                </Link>
-              </Typography>
-              <Typography variant="subtitle1">
-                <Released futureText="Will be released in" pastText="Was released" time={book.released} />
-              </Typography>
-              <Typography variant="subtitle1">
-                Length: <TimeSpan seconds={book.length} />
-              </Typography>
-              <Summary text={book.summary} />
-            </Grid>
-          </Grid>
-        </Paper>
-      </Grid>
-    </Grid>
+    <Row>
+      <Col span={4}>
+        <img src={AudibleService.getImageUrl(book.asin)} alt={'Image for ' + book.asin} width={151} height={151} />
+      </Col>
+      <Col span={20}>
+        <Row>
+          <Col>
+            <Title level={4}>
+              {book.title}
+              <Link style={{ marginLeft: '10px' }} href={book.link} target="_blank" rel="noreferrer">
+                <span role="img" className="anticon">
+                  <FaAudible color="#FF9900" />
+                </span>
+              </Link>
+            </Title>
+          </Col>
+        </Row>
+        <Row>
+          <Col>{hasBook ? <Text type="success">You own this book</Text> : <Text type="warning">You are missing this book</Text>}</Col>
+        </Row>
+        <Row>
+          <Col>
+            <Released futureText="Will be released in" pastText="Was released" time={book.released} />
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Text strong>Length:</Text> <TimeSpan seconds={book.length} />
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Summary text={book.summary} />
+          </Col>
+        </Row>
+      </Col>
+    </Row>
   );
 };
 

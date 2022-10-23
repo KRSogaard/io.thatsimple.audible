@@ -2,7 +2,7 @@ import { APILogger } from '../logger/api.logger';
 import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
 import { User, UserWithPassword, RegisterUser } from '../models/user.model';
 import * as mysql from '../util/MySQL.util';
-import * as TimeUtil from '../util/time.util';
+import * as TimeUtil from '../util/Time.util';
 import * as UserUtil from '../util/User.util';
 
 export class AudibleUserService {

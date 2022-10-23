@@ -1,12 +1,19 @@
 import React from 'react';
-import { Typography } from '@mui/material';
+import { Typography } from 'antd';
 
 const Summary = (props: any) => {
   let { text } = props;
   let [shortend, setShortend] = React.useState(true);
 
+  const { Paragraph, Text } = Typography;
+
   if (!text || text.length < 200) {
-    return <Typography>{text}</Typography>;
+    return (
+      <Typography>
+        <Text strong>Summary: </Text>
+        {text}
+      </Typography>
+    );
   }
 
   if (shortend) {
@@ -16,15 +23,17 @@ const Summary = (props: any) => {
       shortText = shortText.substring(0, lastSpace) + '...';
     }
     return (
-      <Typography variant="body2" style={{ cursor: 'pointer' }} onClick={(e) => setShortend(false)}>
+      <Paragraph style={{ cursor: 'pointer' }} onClick={(e) => setShortend(false)}>
+        <Text strong>Summary: </Text>
         {shortText}
-      </Typography>
+      </Paragraph>
     );
   }
   return (
-    <Typography variant="body2" style={{ cursor: 'pointer' }} onClick={(e) => setShortend(true)}>
+    <Paragraph style={{ cursor: 'pointer' }} onClick={(e) => setShortend(true)}>
+      <Text strong>Summary: </Text>
       {text}
-    </Typography>
+    </Paragraph>
   );
 };
 

@@ -23,7 +23,7 @@ export const MiniIOClient = (): Minio.Client => {
   const endPoint = process.env.MINIO_END_POINT;
   const accessKey = process.env.MINIO_ACCESS_KEY;
   const secretKey = process.env.MINIO_SECRET_KEY;
-  logger.info('Setting up MinIO Client :::', endPoint, accessKey, secretKey);
+  logger.info('Setting up MinIO Client :::', endPoint, accessKey);
 
   minioClient = new Minio.Client({
     endPoint: endPoint,

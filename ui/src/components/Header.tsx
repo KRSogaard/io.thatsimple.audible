@@ -20,55 +20,47 @@ const Header = () => {
     window.location.href = '/';
   };
 
+  let menuItems = [
+    { label: <Link to={'/'}>Home</Link>, key: 'home' },
+    { label: <Link to={'/series'}>My AudioBooks</Link>, key: 'series' },
+    { label: <Link to={'/import'}>Import my AudioBooks</Link>, key: 'import' },
+  ];
+
+  let userMenu = [];
+  if (!AudibleService.isAuthenticated()) {
+    userMenu.push({ label: <Link to={'/signin'}>Sign In</Link>, key: 'signin' });
+    userMenu.push({ label: <Link to={'/signup'}>Sign Up</Link>, key: 'signup' });
+  } else {
+    userMenu.push({
+      label: (
+        <Row>
+          <Col flex="6">{me && <Gravatar email={me.email} rating="pg" default={'retro'} />}</Col>
+          <Col style={{ paddingLeft: '5px' }} flex="auto">
+            {me?.username}
+          </Col>
+        </Row>
+      ),
+      key: 'submenu',
+      children: [
+        {
+          label: (
+            <Link onClick={handleLogout} to={'/signout'}>
+              Sign out
+            </Link>
+          ),
+          key: 'sign-out',
+        },
+      ],
+    });
+  }
+
   return (
     <Row>
       <Col flex="auto">
-        <Menu mode="horizontal" theme="dark" defaultSelectedKeys={['home']}>
-          <Menu.Item key="home" icon={<HomeOutlined />}>
-            <Link to={'/'}>Home</Link>
-          </Menu.Item>
-          <Menu.Item key="series" icon={<UnorderedListOutlined />}>
-            <Link to={'/series'}>My AudioBooks</Link>
-          </Menu.Item>
-          <Menu.Item key="import" icon={<ImportOutlined />}>
-            <Link to={'/import'}>Import my AudioBooks</Link>
-          </Menu.Item>
-        </Menu>
+        <Menu mode="horizontal" theme="dark" defaultSelectedKeys={['home']} items={menuItems} />
       </Col>
       <Col flex="250px">
-        <Menu theme="dark" mode="horizontal">
-          {!AudibleService.isAuthenticated() ? (
-            <>
-              <Menu.Item icon={<LoginOutlined />}>
-                <Link to={'/signin'}>Sign in</Link>
-              </Menu.Item>
-              <Menu.Item icon={<UserAddOutlined />}>
-                <Link to={'/signup'}>Sign up</Link>
-              </Menu.Item>
-            </>
-          ) : (
-            <>
-              <Menu.SubMenu
-                key="SubMenu"
-                title={
-                  <Row>
-                    <Col flex="6">
-                      <Gravatar email={me?.email} rating="pg" default={'retro'} />
-                    </Col>
-                    <Col style={{ paddingLeft: '5px' }} flex="auto">
-                      {me?.username}
-                    </Col>
-                  </Row>
-                }>
-                <Menu.Item icon={<LogoutOutlined />}>
-                  <Link onClick={handleLogout} to={'/signout'}>
-                    Sign out
-                  </Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-            </>
-          )}
-        </Menu>
+        <Menu theme="dark" mode="horizontal" items={userMenu} />
       </Col>
     </Row>
   );

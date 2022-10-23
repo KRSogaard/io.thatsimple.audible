@@ -9,7 +9,7 @@ import {
   AudibleSeriesWithBooks,
 } from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
-import * as timeUtil from '../util/time.util';
+import * as timeUtil from '../util/Time.util';
 
 export class AudibleSeriesService {
   public logger: APILogger;

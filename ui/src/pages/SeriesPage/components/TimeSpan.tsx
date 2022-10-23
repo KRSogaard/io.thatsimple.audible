@@ -1,5 +1,3 @@
-import React from 'react';
-
 const TimeSpan = (props: any) => {
   let { seconds } = props;
 

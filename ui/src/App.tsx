@@ -1,4 +1,3 @@
-import React from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import SeriesPage from './pages/SeriesPage';
@@ -8,8 +7,8 @@ import ImportPage from './pages/ImportPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import RequireAuth from './components/RequireAuth';
-import 'antd/dist/antd.css';
-import { Breadcrumb, Layout, Menu } from 'antd';
+import 'antd/dist/antd.min.css';
+import { Layout } from 'antd';
 import { Helmet } from 'react-helmet-async';
 
 function App() {
@@ -47,7 +46,7 @@ function App() {
               <Route path="/signup" element={<RegisterPage />} />
             </Routes>
           </Layout.Content>
-          <Layout.Footer>Footer</Layout.Footer>
+          {/* <Layout.Footer>Footer</Layout.Footer> */}
         </Layout>
       </BrowserRouter>
     </div>

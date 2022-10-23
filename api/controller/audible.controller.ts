@@ -5,7 +5,7 @@ import { AudibleBookService } from '../service/book.service';
 import { AudibleSeriesService } from '../service/series.service';
 import { AudibleUserService } from '../service/user.service';
 import * as Queue from '../util/Queue.util';
-import * as timeUtil from '../util/time.util';
+import * as timeUtil from '../util/Time.util';
 
 export class AudibleController {
   logger: APILogger;

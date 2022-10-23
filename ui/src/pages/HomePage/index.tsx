@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import AudibleService, { SeriesDataResponse } from '../../services/AudibleService';
 import { Helmet } from 'react-helmet-async';
-import { Card, Layout, Breadcrumb, Alert, List, Typography, Collapse, Button, Row, Col } from 'antd';
+import { Card, Breadcrumb, Row, Col } from 'antd';
 
 function HomePage() {
   return (

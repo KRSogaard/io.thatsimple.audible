@@ -24,7 +24,7 @@ export const RabbitMQConnection = async (): Promise<Connection> => {
   const endPoint = process.env.RABBITMQ_HOST;
   const accessKey = process.env.RABBITMQ_USER;
   const secretKey = process.env.RABBITMQ_PASS;
-  logger.info('Setting up RabbitMQ Connection :::', endPoint, accessKey, secretKey);
+  logger.info('Setting up RabbitMQ Connection :::', endPoint, accessKey);
 
   connection = await connect('amqp://' + accessKey + ':' + secretKey + '@' + endPoint);
   return connection;

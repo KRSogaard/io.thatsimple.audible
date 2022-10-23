@@ -7,14 +7,13 @@
         "@emotion/react": "^11.10.4",
         "@emotion/styled": "^11.10.4",
         "@gregoranders/csv": "^0.0.9",
-        "@mui/icons-material": "^5.10.9",
-        "@mui/material": "^5.10.9",
         "@testing-library/react": "^13.4.0",
         "@types/react": "^18.0.21",
         "@types/react-dom": "^18.0.6",
         "@types/react-gravatar": "^2.6.10",
         "@types/react-router-dom": "^5.3.3",
         "antd": "^4.23.6",
+        "http-proxy-middleware": "^2.0.6",
         "javascript-time-ago": "^2.5.7",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -34,7 +33,6 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
-    "proxy": "http://mern-api:3080",
     "eslintConfig": {
         "extends": [
             "react-app",

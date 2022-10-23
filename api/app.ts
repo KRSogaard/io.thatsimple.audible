@@ -145,6 +145,10 @@ class App {
       this.userController.getCurrentJobs(req.user, res);
     });
 
+    this.express.get('/', async (req: any, res) => {
+      res.sendFile(path.join(__dirname, './ui/build/index.html'));
+    });
+
     // handle undefined routes
     this.express.use('*', (req, res, next) => {
       res.status(404).send('Not Found');

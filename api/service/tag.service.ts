@@ -1,7 +1,7 @@
 import { APILogger } from '../logger/api.logger';
 import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
-import * as timeUtil from '../util/time.util';
+import * as timeUtil from '../util/Time.util';
 
 export class AudibleTagService {
   public logger: APILogger;

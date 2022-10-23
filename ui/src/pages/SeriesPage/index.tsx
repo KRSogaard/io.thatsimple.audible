@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AudibleService, { SeriesDataResponse } from '../../services/AudibleService';
 import Show from './components/Show';
 
 function SeriesPage() {
-  const [showType, setShowType] = useState(1);
   const [myBooks, setMyBooks] = useState<number[]>([]);
   const [archived, setArchived] = useState<number[]>([]);
   const [allSeries, setAllSeries] = useState<SeriesDataResponse[]>([]);
@@ -65,7 +64,6 @@ function SeriesPage() {
 
   const changeArchiveStatus = async (seriesId: number, archived: boolean): Promise<void> => {
     setLoading(true);
-    console.log('changeArchiveStatus', seriesId, archived);
     let selectedSeries = null;
     if (archived) {
       let seriesFilter = series.filter((s) => s.id === seriesId);
@@ -77,7 +75,6 @@ function SeriesPage() {
         return;
       }
       selectedSeries = seriesFilter[0];
-      console.log('Found the series: ', selectedSeries);
       AudibleService.archiveSeries(seriesId);
       setSeries(series.filter((s) => s.id !== seriesId));
       setCompletedSeries(completedSeries.filter((s) => s.id !== seriesId));
@@ -100,67 +97,7 @@ function SeriesPage() {
     setLoading(false);
   };
 
-  // if (loading) {
-  //   return (
-  //     <>
-  //       Hello
-  //       <Skeleton active />
-  //     </>
-  //   );
-  // }
-
   return <Show active={series} completed={completedSeries} archived={archivedSeries} loading={loading} myBooks={myBooks} onArchive={changeArchiveStatus} />;
-
-  // return (
-  //   <Grid container spacing={2} margin={2}>
-  //     <Grid xs={2}>
-  //       <List>
-  //         <ListItem>
-  //           <ListItemButton onClick={(e) => setShowType(1)}>
-  //             <ListItemIcon>
-  //               <SendIcon />
-  //             </ListItemIcon>
-  //             <ListItemText primary="Active Series" />
-  //           </ListItemButton>
-  //         </ListItem>
-  //         <ListItem>
-  //           <ListItemButton onClick={(e) => setShowType(2)}>
-  //             <ListItemIcon>
-  //               <DoneAllIcon />
-  //             </ListItemIcon>
-  //             <ListItemText primary="Completed Series" />
-  //           </ListItemButton>
-  //         </ListItem>
-  //         <ListItem>
-  //           <ListItemButton onClick={(e) => setShowType(3)}>
-  //             <ListItemIcon>
-  //               <InboxIcon />
-  //             </ListItemIcon>
-  //             <ListItemText primary="Archived Series" />
-  //           </ListItemButton>
-  //         </ListItem>
-  //         <ListItem>{series.length + completedSeries.length + archivedSeries.length} Series</ListItem>
-  //         <ListItem>{myBooks.length} Books owned</ListItem>
-  //       </List>
-  //     </Grid>
-  //     <Grid xs={10}>
-  //       <Grid container spacing={2}>
-  //         {showSeries
-  //           .sort((a: SeriesDataResponse, b: SeriesDataResponse) => {
-  //             if (!a.latestBook || !b.latestBook) {
-  //               return -1;
-  //             }
-  //             return a.latestBook.released < b.latestBook.released ? 1 : -1;
-  //           })
-  //           .map((s) => (
-  //             <Grid key={s.asin} xs={12} style={{ marginBottom: 12 }}>
-  //               <SeriesComponent series={s} myBooks={myBooks} onArchive={changeArchiveStatus} isArchived={isArchived(s.id)} key={s.id} />
-  //             </Grid>
-  //           ))}
-  //       </Grid>
-  //     </Grid>
-  //   </Grid>
-  // );
 }
 
 export default SeriesPage;

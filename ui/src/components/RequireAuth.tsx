@@ -4,7 +4,6 @@ import AudibleService from '../services/AudibleService';
 
 interface Props {
   children?: ReactNode;
-  // any props that come into the component
 }
 
 function RequireAuth({ children }: Props) {

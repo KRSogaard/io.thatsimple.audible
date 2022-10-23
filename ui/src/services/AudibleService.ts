@@ -2,7 +2,7 @@ class AudibleService {
   private userToken: string | null;
   private userTokenExpires: number | null;
   private me: User | null;
-  private baseUri = 'http://localhost:3080/api';
+  private baseUri = '/api';
 
   public constructor() {
     this.userToken = null;

@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
-import { Layout, Menu, Skeleton, Breadcrumb, Row, List } from 'antd';
-import AudibleService, { SeriesDataResponse } from '../../../services/AudibleService';
+import { Layout, Menu, Skeleton, Breadcrumb, Space } from 'antd';
+import { SeriesDataResponse } from '../../../services/AudibleService';
 import { FaArchive, FaCheckDouble } from 'react-icons/fa';
 import { BiPulse } from 'react-icons/bi';
 import { Helmet } from 'react-helmet-async';
 import { camelize } from '../../../utils/StringUtils';
-import { MenuItem } from '@mui/material';
-import SeriesComponent from './Series';
 import Series from './Series';
 
 export interface Props {
@@ -21,7 +19,7 @@ export interface Props {
 const Summary = (props: Props) => {
   let { active, completed, archived, loading, myBooks, onArchive } = props;
   let [activeMenu, setActiveMenu] = React.useState('active');
-  let [series, setSeries] = React.useState<SeriesDataResponse[]>([]);
+  let [series, setSeries] = React.useState<SeriesDataResponse[]>(active);
 
   useEffect(() => {
     switch (activeMenu) {
@@ -35,7 +33,7 @@ const Summary = (props: Props) => {
         setSeries(active);
         break;
     }
-  }, [activeMenu]);
+  }, [activeMenu, active, completed, archived]);
 
   useEffect(() => {
     setSeries(active);
@@ -46,6 +44,37 @@ const Summary = (props: Props) => {
     setActiveMenu(key);
   };
 
+  let menuItems = [
+    {
+      type: 'group',
+      label: 'Series',
+      key: 'series-menu',
+      children: [
+        { label: 'Active (' + active.length + ')', key: 'active', icon: <BiPulse /> },
+        { label: 'Completed (' + completed.length + ')', key: 'completed', icon: <FaCheckDouble /> },
+        { label: 'Archived (' + archived.length + ')', key: 'archived', icon: <FaArchive /> },
+      ],
+    },
+    {
+      type: 'group',
+      key: 'stats-series-menu',
+      label: (
+        <span>
+          <b>Series:</b> {active.length + completed.length + archived.length}
+        </span>
+      ),
+    },
+    {
+      type: 'group',
+      key: 'stats-books-menu',
+      label: (
+        <span>
+          <b>Books:</b> {myBooks.length}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
       <Helmet>
@@ -55,28 +84,7 @@ const Summary = (props: Props) => {
 
       <Layout>
         <Layout.Sider>
-          <Menu mode="inline" style={{ height: '100vh' }} theme="dark" defaultSelectedKeys={['active']} onSelect={onMenuSelect}>
-            <Menu.ItemGroup title="Series">
-              <Menu.Item key="active" icon={<BiPulse />}>
-                Active
-              </Menu.Item>
-              <Menu.Item key="completed" icon={<FaCheckDouble />}>
-                Completed
-              </Menu.Item>
-              <Menu.Item key="archived" icon={<FaArchive />}>
-                Archived
-              </Menu.Item>
-            </Menu.ItemGroup>
-
-            <Menu.Divider />
-            <Menu.ItemGroup
-              title={
-                <span>
-                  <b>Series:</b> {active.length + completed.length + archived.length}
-                </span>
-              }
-            />
-          </Menu>
+          <Menu mode="inline" style={{ height: '100vh' }} theme="dark" defaultSelectedKeys={['active']} onSelect={onMenuSelect} items={menuItems} />
         </Layout.Sider>
         <Layout.Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
@@ -85,11 +93,22 @@ const Summary = (props: Props) => {
             <Breadcrumb.Item>{camelize(activeMenu)}</Breadcrumb.Item>
           </Breadcrumb>
 
-          {loading
-            ? Array.from({ length: 3 }).map((_, i) => <Skeleton active avatar={{ shape: 'square' }} paragraph={{ rows: 4 }} />)
-            : series.map((s: SeriesDataResponse) => (
-                <Series key={s.id} series={s} myBooks={myBooks} onArchive={onArchive} isArchived={archived.some((a) => a.id === s.id)} />
-              ))}
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => <Skeleton key={'skeleton-' + i} active avatar={{ shape: 'square' }} paragraph={{ rows: 4 }} />)
+          ) : (
+            <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+              {series
+                .sort((a: SeriesDataResponse, b: SeriesDataResponse) => {
+                  if (!a.latestBook || !b.latestBook) {
+                    return -1;
+                  }
+                  return a.latestBook.released < b.latestBook.released ? 1 : -1;
+                })
+                .map((s: SeriesDataResponse) => (
+                  <Series key={'series-' + s.id} series={s} myBooks={myBooks} onArchive={onArchive} isArchived={archived.some((a) => a.id === s.id)} />
+                ))}
+            </Space>
+          )}
         </Layout.Content>
       </Layout>
     </>

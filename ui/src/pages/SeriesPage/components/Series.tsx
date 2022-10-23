@@ -1,19 +1,13 @@
 import React from 'react';
-import { Card, Row, Col, List, Button } from 'antd';
+import { Card, Row, Col, Button, Typography, Space } from 'antd';
 import AudibleService, { BookDataResponse } from '../../../services/AudibleService';
 import Summary from './Summary';
 import Released from '../../../components/Released';
 import Book from './Book';
 import { MdUnarchive, MdArchive } from 'react-icons/md';
-import { FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaAudible } from 'react-icons/fa';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 
-// import Grid from '@mui/material/Unstable_Grid2';
-// import { Typography, Paper, Link, Button, Chip } from '@mui/material';
-// import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-// import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-// import ArchiveIcon from '@mui/icons-material/Archive';
-// import UnarchiveIcon from '@mui/icons-material/Unarchive';
 const SeriesComponent = (props: any) => {
   let { series, myBooks, onArchive, isArchived } = props;
   let [isOpen, setIsOpen] = React.useState(false);
@@ -35,97 +29,106 @@ const SeriesComponent = (props: any) => {
     return null;
   }
 
+  const { Text, Link, Title } = Typography;
+
   return (
-    <Card style={{ marginBottom: '8px' }}>
-      <div style={{ float: 'right', cursor: 'pointer' }}>
-        {!isArchived && (
-          <Button
-            style={{ marginRight: '8px' }}
-            onClick={() => onArchive(series.id, true)}
-            size="large"
-            icon={
-              <span role="img" className="anticon">
-                <MdArchive size={'1em'} />
-              </span>
-            }>
-            Archive series
-          </Button>
-        )}
-        {isArchived && (
-          <Button
-            style={{ marginRight: '8px' }}
-            onClick={() => onArchive(series.id, false)}
-            size="large"
-            icon={
-              <span role="img" className="anticon">
-                <MdUnarchive size={'1em'} />
-              </span>
-            }>
-            Unarchive series
-          </Button>
-        )}
-        {isOpen && (
-          <Button onClick={(e) => setIsOpen(false)} size="large" icon={<UpOutlined />}>
-            Collapse books
-          </Button>
-        )}
-        {!isOpen && (
-          <Button onClick={(e) => setIsOpen(true)} size="large" icon={<DownOutlined />}>
-            Expand books
-          </Button>
-        )}
-      </div>
+    <Card>
       <Row>
-        <Col>
+        <Col span={4} onClick={(e) => setIsOpen(!isOpen)} style={{ cursor: 'pointer' }}>
           <img src={AudibleService.getImageUrl(series.latestBook.asin)} alt={'Image for ' + series.latestBook.asin} width={151} height={151} />
         </Col>
-        <Col style={{ paddingLeft: '8px' }}>
+        <Col span={20}>
           <Row>
-            <Col>{series.name}</Col>
+            <Col flex="auto">
+              <Title style={{ cursor: 'pointer' }} onClick={(e) => setIsOpen(!isOpen)} level={4}>
+                {series.name}
+                <Link style={{ marginLeft: '10px' }} href={series.link} target="_blank" rel="noreferrer">
+                  <span role="img" className="anticon">
+                    <FaAudible color="#FF9900" />
+                  </span>
+                </Link>
+              </Title>
+            </Col>
+            <Col flex="none">
+              {!isArchived && (
+                <Button
+                  style={{ marginRight: '8px' }}
+                  onClick={() => onArchive(series.id, true)}
+                  size="large"
+                  icon={
+                    <span role="img" className="anticon">
+                      <MdArchive size={'1em'} />
+                    </span>
+                  }>
+                  Archive series
+                </Button>
+              )}
+              {isArchived && (
+                <Button
+                  style={{ marginRight: '8px' }}
+                  onClick={() => onArchive(series.id, false)}
+                  size="large"
+                  icon={
+                    <span role="img" className="anticon">
+                      <MdUnarchive size={'1em'} />
+                    </span>
+                  }>
+                  Unarchive series
+                </Button>
+              )}
+              {isOpen && (
+                <Button onClick={(e) => setIsOpen(false)} size="large" icon={<UpOutlined />}>
+                  Collapse books
+                </Button>
+              )}
+              {!isOpen && (
+                <Button onClick={(e) => setIsOpen(true)} size="large" icon={<DownOutlined />}>
+                  Expand books
+                </Button>
+              )}
+            </Col>
           </Row>
           <Row>
             <Col>
-              <List
-                dataSource={series.books}
-                renderItem={(item: BookDataResponse) => (
-                  <List.Item key={'book-' + item.id} actions={[<a key="list-loadmore-edit">edit</a>, <a key="list-loadmore-more">more</a>]}></List.Item>
+              <Space>
+                <Text>{'You have ' + bookCount + ' of ' + series.books.length + ' books'}</Text>
+                {newBooksSinceLastPurchase > 0 ? (
+                  <Text type="warning">{newBooksSinceLastPurchase} new books since last purchase</Text>
+                ) : (
+                  <Text type="success">You have the latest book</Text>
                 )}
-              />
+              </Space>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <Text>
+                <Released pastText="Latest book was released" futureText="Next book will be released in" time={series.latestBook.released} />
+              </Text>
+            </Col>
+          </Row>
+          <Row style={{ marginTop: '8px' }}>
+            <Col>
+              <Summary text={series.summary} />
             </Col>
           </Row>
         </Col>
       </Row>
+      {isOpen && (
+        <Row>
+          <Col offset={2} span={22}>
+            {series.books.map((book: BookDataResponse) => (
+              <Row style={{ marginTop: '8px' }} key={'book-' + book.id}>
+                <Col span={24}>
+                  <Book book={book} myBooks={myBooks} />
+                </Col>
+              </Row>
+            ))}
+          </Col>
+        </Row>
+      )}
     </Card>
   );
 };
 
-//  <Grid container spacing={2}>
-//     <Grid xs="auto">
-
-//     </Grid>
-//     <Grid xs>
-//       <Typography style={{ cursor: 'pointer' }} variant="h5" onClick={(e) => setIsOpen(!isOpen)}>
-//         {series.name}
-//         <Link style={{ marginLeft: '10px' }} href={series.link} target="_blank" rel="noreferrer">
-//           <Typography variant="caption">to audible</Typography>
-//         </Link>
-//       </Typography>
-//       <Typography variant="subtitle1">{'You have ' + bookCount + ' of ' + series.books.length + ' books'}</Typography>
-//       <Typography variant="subtitle1">
-//         <Released pastText="Latest book was released" futureText="Next book will be released in" time={series.latestBook.released} />
-//       </Typography>
-//       <Typography variant="subtitle1">
-//         {newBooksSinceLastPurchase > 0 ? newBooksSinceLastPurchase + ' new books since last purchase' : 'You have the latest book'}
-//       </Typography>
-//       <Summary text={series.summary} />
-//     </Grid>
-//   </Grid>
-// <Grid container spacing={2}>
-//   {isOpen && (
-//     <Grid xs={12}>
-//       {sortedBooks.map((b: BookDataResponse) => (
-//         <Book key={b.id} myBooks={myBooks} book={b} />
-//       ))}
-//     </Grid>
-//   )}
 export default SeriesComponent;
