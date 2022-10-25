@@ -1,7 +1,8 @@
 import { APILogger } from '../logger/api.logger';
-import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
+import { AudibleAuthor } from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
 import * as timeUtil from '../util/Time.util';
+import * as MapUtil from '../util/Map.util';
 
 export class AudibleAuthorService {
   public logger: APILogger;
@@ -10,16 +11,23 @@ export class AudibleAuthorService {
     this.logger = new APILogger();
   }
 
-  async saveAuthor(author: AudibleAuthor): Promise<AudibleAuthor> {
-    this.logger.info('Saving author: ' + author.name);
-    let check = await this.getAuthorASIN(author.asin);
+  async saveAuthor(name: string, asin: string, link: string): Promise<AudibleAuthor> {
+    this.logger.info('Saving author: ' + name);
+    let check = await this.getAuthorASIN(asin);
     if (check) {
-      this.logger.info('Author ' + author.name + ' already exists');
+      this.logger.info('Author ' + name + ' already exists');
       return check;
     }
     let sql = 'INSERT INTO `authors` (`name`, `asin`, `link`, `created`) VALUES (?, ?, ?, ?);';
-    let saveResult = await mysql.runQuery(sql, [author.name, author.asin, author.link, Math.round(Date.now() / 1000)]);
-    return await this.getAuthor(saveResult.insertId);
+    let timespan = timeUtil.getNowTimestamp();
+    let saveResult = await mysql.runQuery(sql, [name, asin, link, timespan]);
+    return {
+      id: saveResult.insertId,
+      name: name,
+      asin: asin,
+      link: link,
+      created: timeUtil.dateFromTimestamp(timespan),
+    };
   }
 
   async getAuthor(id: number): Promise<AudibleAuthor> {
@@ -46,18 +54,25 @@ export class AudibleAuthorService {
       name: results[0].name,
       asin: results[0].asin,
       link: results[0].link,
+      created: timeUtil.dateFromTimestamp(results[0].created),
     };
   }
 
-  async addBookToAuthor(bookId: number, authorId: number): Promise<void> {
-    this.logger.info('Adding book ' + bookId + ' to author ' + authorId);
+  async addBookToAuthor(bookId: number, author: AudibleAuthor): Promise<void> {
+    this.logger.info('Adding book ' + bookId + ' to author ' + author.id);
     let sql = 'SELECT * FROM `books_authors` WHERE `book_id` = ? AND `author_id` = ?';
-    let results = await mysql.runQuery(sql, [bookId, authorId]);
+    let results = await mysql.runQuery(sql, [bookId, author.id]);
     if (!results || results.length === 0) {
       sql = 'INSERT INTO `books_authors` (`book_id`, `author_id`, `created`) VALUES (?, ?, ?);';
-      await mysql.runQuery(sql, [bookId, authorId, Math.round(Date.now() / 1000)]);
+      await mysql.runQuery(sql, [bookId, author.id, Math.round(Date.now() / 1000)]);
+
+      await mysql.runQuery('UPDATE `books` SET `last_updated` = ?, `authors` = concat(ifnull(`authors`,""), ?) WHERE `id` = ?', [
+        timeUtil.getNowTimestamp(),
+        MapUtil.createMapPart({ id: author.id, name: author.name, asin: author.asin }),
+        bookId,
+      ]);
     } else {
-      this.logger.debug('Book ' + bookId + ' already in author ' + authorId);
+      this.logger.debug('Book ' + bookId + ' already in author ' + author.id);
     }
   }
 }

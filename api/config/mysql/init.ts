@@ -131,13 +131,23 @@ export const commands = [
 
   'CREATE TABLE IF NOT EXISTS `tags` ( ' +
     '  `id` int NOT NULL AUTO_INCREMENT,  ' +
-    '  `book_id` int DEFAULT NULL,  ' +
     '  `tag` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,  ' +
     '  `created` int DEFAULT NULL,  ' +
     '  PRIMARY KEY (`id`),  ' +
-    '  KEY `book_id` (`book_id`),  ' +
-    '  CONSTRAINT `tags_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE ' +
+    '  KEY `book_id` (`book_id`)  ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=1543 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ',
+
+  'CREATE TABLE IF NOT EXISTS `tags_books` ( ' +
+    '  `id` int NOT NULL AUTO_INCREMENT,  ' +
+    '  `book_id` int DEFAULT NULL,  ' +
+    '  `tag_id` int DEFAULT NULL,  ' +
+    '  `created` int DEFAULT NULL,  ' +
+    '  PRIMARY KEY (`id`),  ' +
+    '  KEY `book_id` (`book_id`),  ' +
+    '  KEY `tag_id` (`tag_id`),  ' +
+    '  CONSTRAINT `tags_books_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,  ' +
+    '  CONSTRAINT `tags_books_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE ' +
+    ') ENGINE=InnoDB AUTO_INCREMENT=642 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ',
 
   'CREATE TABLE IF NOT EXISTS `users_archived_series` ( ' +
     '  `id` int NOT NULL AUTO_INCREMENT,  ' +

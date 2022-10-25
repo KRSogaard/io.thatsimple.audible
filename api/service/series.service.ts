@@ -51,6 +51,7 @@ export class AudibleSeriesService {
       summary: result.summary,
       lastUpdated: timeUtil.dateFromTimestamp(result.last_updated),
       shouldDownload: result.should_download === 1,
+      created: timeUtil.dateFromTimestamp(result.created),
     };
   }
 

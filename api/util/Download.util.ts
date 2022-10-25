@@ -12,7 +12,7 @@ export interface DownloadReponse {
 export const downloadHtml = async (downloadUrl: string): Promise<DownloadReponse | null> => {
   let html = await StorageService.getWebCache(downloadUrl);
   if (html && html.length > 10) {
-    logger.debug('Using cached html for: ' + downloadUrl);
+    logger.debug('Using cached html for: ' + downloadUrl, 'html length: ', html.length);
     return {
       status: 200,
       data: html,

@@ -10,20 +10,29 @@ function SeriesPage() {
   const [completedSeries, setCompletedSeries] = useState<SeriesDataResponse[]>([]);
   const [archivedSeries, setArchivedSeries] = useState<SeriesDataResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  let callActive = false;
 
   useEffect(() => {
+    console.log('useEffect');
     async function fetchData() {
+      if (callActive) {
+        // to prevent double calls
+        return;
+      }
+      callActive = true;
       setLoading(true);
       if (!AudibleService.isAuthenticated()) {
         console.log('not authenticated');
         return;
       }
 
+      console.log('Calling to get data');
       const myData = await AudibleService.getMyData();
       setMyBooks(myData.myBooks);
       setAllSeries(myData.series);
       setArchived(myData.archivedSeries);
       setLoading(false);
+      callActive = false;
     }
     fetchData();
   }, []);

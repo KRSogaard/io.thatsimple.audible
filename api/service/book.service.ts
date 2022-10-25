@@ -1,7 +1,8 @@
 import { APILogger } from '../logger/api.logger';
-import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
+import { AudibleBook, AudibleTag, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
 import * as timeUtil from '../util/Time.util';
+import * as MapUtil from '../util/Map.util';
 
 export class AudibleBookService {
   public logger: APILogger;
@@ -13,13 +14,16 @@ export class AudibleBookService {
   async getBookASIN(asin: string): Promise<AudibleBook> {
     this.logger.debug('Getting book by ASIN: ' + asin);
     let results = await mysql.runQuery('SELECT * FROM `books` WHERE `asin` = ?', [asin]);
-    return this.parseBookResult(results);
+    if (results.length === 0) {
+      return null;
+    }
+    return this.parseBookResult(results[0], true);
   }
 
   async getBook(id: number): Promise<AudibleBook> {
     this.logger.debug('Getting book by ID: ' + id);
     let results = await mysql.runQuery('SELECT * FROM `books` WHERE `id` = ?', [id]);
-    return await this.parseBookResult(results);
+    return await this.parseBookResult(results, true);
   }
 
   async getBooksIdsByUser(userId: number) {
@@ -33,40 +37,34 @@ export class AudibleBookService {
   async bulkGetBooks(ids: number[]): Promise<AudibleBook[]> {
     this.logger.info('Getting books by IDs: ' + ids);
     let books = [];
-    await Promise.all(ids.map(async (id) => books.push(await this.getBook(id))));
+
+    let results = await mysql.runQuery('SELECT * FROM `books` WHERE `id` in (?)', [ids]);
+    await Promise.all(results.map(async (bookResult) => books.push(await this.parseBookResult(bookResult, false))));
     return books;
   }
 
-  async parseBookResult(results: any): Promise<AudibleBook> {
-    if (results.length === 0) {
-      return null;
-    }
-
+  async parseBookResult(result: any, getSeries: boolean): Promise<AudibleBook> {
     let series: AudibleSeriesBook[] = [];
-    let seriesResult = await mysql.runQuery(
-      'SELECT `series`.*, `series_books`.book_number FROM `series` ' +
-        'LEFT JOIN `series_books` ON `series_books`.series_id = `series`.id ' +
-        'WHERE `series_books`.book_id = ?',
-      [results[0].id]
-    );
-    for (let seriesBook of seriesResult) {
-      series.push({
-        id: seriesBook.id,
-        name: seriesBook.name,
-        asin: seriesBook.asin,
-        link: seriesBook.link,
-        lastUpdated: timeUtil.dateFromTimestamp(seriesBook.last_updated),
-        bookNumber: seriesBook.book_number,
-        summary: seriesBook.summary,
-      });
+    if (getSeries) {
+      let seriesResult = await mysql.runQuery(
+        'SELECT `series`.*, `series_books`.book_number FROM `series` ' +
+          'LEFT JOIN `series_books` ON `series_books`.series_id = `series`.id ' +
+          'WHERE `series_books`.book_id = ?',
+        [result.id]
+      );
+      for (let seriesBook of seriesResult) {
+        series.push({
+          id: seriesBook.id,
+          asin: seriesBook.asin,
+          name: seriesBook.name,
+          bookNumber: seriesBook.book_number,
+          created: timeUtil.dateFromTimestamp(seriesBook.created),
+        });
+      }
     }
 
     let authors = [];
-    let authorResult = await mysql.runQuery(
-      'SELECT `authors`.* FROM `authors` LEFT JOIN `books_authors` ON `books_authors`.author_id = `authors`.id WHERE `books_authors`.book_id = ?',
-      [results[0].id]
-    );
-    for (let author of authorResult) {
+    for (let author of MapUtil.parseMap(result.authors) as AudibleAuthor[]) {
       authors.push({
         id: author.id,
         name: author.name,
@@ -76,11 +74,7 @@ export class AudibleBookService {
     }
 
     let narrators = [];
-    let narratorsResult = await mysql.runQuery(
-      'SELECT n.* FROM `narrators` AS n LEFT JOIN `narrators_books` AS nb ON nb.narrator_id = n.id WHERE nb.book_id = ?',
-      [results[0].id]
-    );
-    for (let narrator of narratorsResult) {
+    for (let narrator of MapUtil.parseMap(result.narrators) as AudibleNarrator[]) {
       narrators.push({
         id: narrator.id,
         name: narrator.name,
@@ -88,23 +82,28 @@ export class AudibleBookService {
     }
 
     let tags = [];
-    let tagResult = await mysql.runQuery('SELECT * FROM `tags` WHERE `tags`.book_id = ?', [results[0].id]);
-    for (let tag of tagResult) {
-      tags.push(tag.tag);
+    for (let tag of MapUtil.parseMap(result.tags) as AudibleTag[]) {
+      tags.push(tag);
+    }
+
+    let categories = [];
+    for (let category of MapUtil.parseMap(result.categories) as AudibleCategory[]) {
+      categories.push(category);
     }
 
     return {
-      id: results[0].id,
-      asin: results[0].asin,
-      link: results[0].link,
-      title: results[0].title,
-      length: results[0].length,
-      released: timeUtil.dateFromTimestamp(results[0].released),
-      summary: results[0].summary,
-      lastUpdated: timeUtil.dateFromTimestamp(results[0].last_updated),
+      id: result.id,
+      asin: result.asin,
+      link: result.link,
+      title: result.title,
+      length: result.length,
+      released: timeUtil.dateFromTimestamp(result.released),
+      summary: result.summary,
+      lastUpdated: timeUtil.dateFromTimestamp(result.last_updated),
       series: series,
       authors: authors,
       narrators: narrators,
+      categories: categories,
       tags: tags,
     };
   }

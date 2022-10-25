@@ -17,11 +17,6 @@
   dependencies:
     "@ctrl/tinycolor" "^3.4.0"
 
-"@ant-design/dark-theme@^2.0.2":
-  "integrity" "sha512-wDzyDA8hky26PKMZ2pcqGq1rfprObGRbZcdh8C+aYH9JA7dzeQvKJ5CctOdjQKl/YyyR7HW5nFUcZfNOayfORw=="
-  "resolved" "https://registry.npmjs.org/@ant-design/dark-theme/-/dark-theme-2.0.2.tgz"
-  "version" "2.0.2"
-
 "@ant-design/icons-svg@^4.2.1":
   "integrity" "sha512-EB0iwlKDGpG93hW8f85CTJTs4SvMX7tt5ceupvhALp1IF44SeUFOMhKUOYqpsoYWQKAOuTRDMqn75rEaKDp0Xw=="
   "resolved" "https://registry.npmjs.org/@ant-design/icons-svg/-/icons-svg-4.2.1.tgz"
@@ -2654,7 +2649,7 @@
   "resolved" "https://registry.npmjs.org/ansi-styles/-/ansi-styles-5.2.0.tgz"
   "version" "5.2.0"
 
-"antd@^4.0.0", "antd@^4.23.6":
+"antd@^4.23.6":
   "integrity" "sha512-AYH57cWBDe1ChtbnvG8i9dpKG4WnjE3AG0zIKpXByFNnxsr4saV6/19ihE8/ImSGpohN4E2zTXmo7R5/MyVRKQ=="
   "resolved" "https://registry.npmjs.org/antd/-/antd-4.23.6.tgz"
   "version" "4.23.6"

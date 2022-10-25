@@ -42,10 +42,11 @@ export class AudibleUserService {
   }
 
   async verifyUser(email: string, password: string): Promise<TokenResponse> {
-    this.logger.info('Verifying user email: ' + email);
+    this.logger.info('Verifying user email: ' + email, 'password: ' + password);
     let user = await this.getUserByEmail(email);
     if (user) {
       let passwordHash = UserUtil.sha512(password, user.password_salt);
+      console.log('passwordHash: ' + passwordHash);
       this.logger.info('Hash', passwordHash);
       if (passwordHash === user.password) {
         let token = UserUtil.genRandomString(32);

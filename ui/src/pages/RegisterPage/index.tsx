@@ -32,8 +32,8 @@ function RegisterPage() {
         <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
         <Breadcrumb.Item>Sign In</Breadcrumb.Item>
       </Breadcrumb>
-      <Row>
-        <Col span={6} offset={9}>
+      <Row justify="center">
+        <Col xl={8} lg={12} md={16} sm={24}>
           <Card title="Sign In">
             <Form name="normal_login" className="login-form" initialValues={{ remember: true }} onFinish={handleSubmit}>
               <Form.Item name="username" rules={[{ required: true, message: 'Please input your Username!' }]}>

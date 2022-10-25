@@ -2,6 +2,7 @@ import { APILogger } from '../logger/api.logger';
 import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
 import * as mysql from '../util/MySQL.util';
 import * as timeUtil from '../util/Time.util';
+import * as MapUtil from '../util/Map.util';
 
 export class AudibleNarratorService {
   public logger: APILogger;
@@ -18,21 +19,32 @@ export class AudibleNarratorService {
       return check;
     }
     let sql = 'INSERT INTO `narrators` (`name`, `created`) VALUES (?,?);';
-    let saveNarratorResult = await mysql.runQuery(sql, [narrator, timeUtil.getNowTimestamp()]);
+    let timespan = timeUtil.getNowTimestamp();
+    let saveNarratorResult = await mysql.runQuery(sql, [narrator, timespan]);
     let narratorId = saveNarratorResult.insertId;
-    return await this.getNarrator(narratorId);
+    return {
+      id: narratorId,
+      name: narrator,
+      created: timeUtil.dateFromTimestamp(timespan),
+    };
   }
 
-  async addBookToNarrator(bookId: number, narratorId: number) {
-    this.logger.info('Adding book ' + bookId + ' to narrator ' + narratorId);
+  async addBookToNarrator(bookId: number, narrator: AudibleNarrator) {
+    this.logger.info('Adding book ' + bookId + ' to narrator ' + narrator.id);
     let sql = 'SELECT * FROM `narrators_books` WHERE `book_id` = ? AND `narrator_id` = ?';
-    let results = await mysql.runQuery(sql, [bookId, narratorId]);
+    let results = await mysql.runQuery(sql, [bookId, narrator.id]);
 
     if (!results || results.length === 0) {
       sql = 'INSERT INTO `narrators_books` (`book_id`, `narrator_id`, `created`) VALUES (?, ?, ?)';
-      await mysql.runQuery(sql, [bookId, narratorId, timeUtil.getNowTimestamp()]);
+      let insertResult = await mysql.runQuery(sql, [bookId, narrator.id, timeUtil.getNowTimestamp()]);
+
+      await mysql.runQuery('UPDATE `books` SET `last_updated` = ?, `narrators` = concat(ifnull(`narrators`,""), ?) WHERE `id` = ?', [
+        timeUtil.getNowTimestamp(),
+        MapUtil.createMapPart({ id: narrator.id, name: narrator.name }),
+        bookId,
+      ]);
     } else {
-      this.logger.debug('Book ' + bookId + ' already added to narrator ' + narratorId);
+      this.logger.debug('Book ' + bookId + ' already added to narrator ' + narrator.id);
     }
   }
 
@@ -47,6 +59,7 @@ export class AudibleNarratorService {
     return {
       id: results[0].id,
       name: results[0].name,
+      created: timeUtil.dateFromTimestamp(results[0].created),
     };
   }
 
@@ -61,6 +74,7 @@ export class AudibleNarratorService {
     return {
       id: results[0].id,
       name: results[0].name,
+      created: timeUtil.dateFromTimestamp(results[0].created),
     };
   }
 }

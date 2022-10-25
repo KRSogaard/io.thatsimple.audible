@@ -1,4 +1,4 @@
-import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory } from '../models/audiblebook.model';
+import { AudibleBook, AudibleSeries, AudibleAuthor, AudibleSeriesBook, AudibleNarrator, AudibleCategory, AudibleTag } from '../models/audiblebook.model';
 import ParseAudioBook, { ParseAudioBookSeries } from '../models/parsed_audiobook.model';
 import { ParseSeries } from '../models/parsed_series.model';
 
@@ -26,7 +26,11 @@ export const parseToAudibleBook = (book: ParseAudioBook): AudibleBook => {
         name: a.name,
       };
     }),
-    tags: book.tags,
+    tags: book.tags.map((a): AudibleTag => {
+      return {
+        tag: a,
+      };
+    }),
     narrators: book.narrators.map((n): AudibleNarrator => {
       return {
         name: n,

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import AudibleService from '../../services/AudibleService';
 import { Helmet } from 'react-helmet-async';
-import { Card, Breadcrumb, Typography, Form, Button, Row, Col, Input, Checkbox } from 'antd';
+import { Card, Breadcrumb, Typography, Form, Button, Row, Col, Input, Checkbox, Alert } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import './index.css';
 
 function LoginPage() {
   let [loading, setLoading] = useState(false);
+  let [error, setError] = useState<string>('');
 
   if (AudibleService.isAuthenticated()) {
     window.location.href = '/';
@@ -14,10 +15,13 @@ function LoginPage() {
 
   const onFinish = async (values: any) => {
     const { email, password, remember } = values;
+    setError('');
     setLoading(true);
     if (await AudibleService.login(email, password, remember)) {
       setLoading(false);
       window.location.href = '/';
+    } else {
+      setError('Invalid Email or Password');
     }
 
     setLoading(false);
@@ -35,10 +39,15 @@ function LoginPage() {
         <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
         <Breadcrumb.Item>Sign In</Breadcrumb.Item>
       </Breadcrumb>
-      <Row>
-        <Col span={6} offset={9}>
+      <Row justify="center">
+        <Col xl={8} lg={12} md={16} sm={24}>
           <Card title="Sign In">
             <Form name="normal_login" className="login-form" initialValues={{ remember: true }} onFinish={onFinish}>
+              {error && (
+                <Form.Item>
+                  <Alert message={error} type="error" showIcon />
+                </Form.Item>
+              )}
               <Form.Item name="email" rules={[{ required: true, message: 'Please input your Email!' }]}>
                 <Input prefix={<MailOutlined className="site-form-item-icon" />} placeholder="Email" />
               </Form.Item>

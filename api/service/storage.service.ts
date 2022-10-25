@@ -94,12 +94,13 @@ class StorageService {
 
   cleanHTML(html: string): string {
     // This may take some time, but it will half the size of the cache
-    return html
-      .replace(/<script[^>]*>(?:(?!<\/script>)[^])*<\/script>/g, '')
-      .replace(/<style[^>]*>(?:(?!<\/style>)[^])*<\/style>/g, '')
-      .replace(/<noscript[^>]*>(?:(?!<\/noscript>)[^])*<\/noscript>/g, '')
-      .replace(/<link[^>]*>/g, '')
-      .replace('</link>', '');
+    // return html
+    //   .replace(/<script[^>]*>(?:(?!<\/script>)[^])*<\/script>/g, '')
+    //   .replace(/<style[^>]*>(?:(?!<\/style>)[^])*<\/style>/g, '')
+    //   .replace(/<noscript[^>]*>(?:(?!<\/noscript>)[^])*<\/noscript>/g, '')
+    //   .replace(/<link[^>]*>/g, '')
+    //   .replace('</link>', '');
+    return html;
   }
 }
 

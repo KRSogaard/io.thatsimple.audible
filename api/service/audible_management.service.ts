@@ -160,25 +160,26 @@ export class AudibleManagementService {
 
     this.logger.info('Book had ' + book.authors.length + ' authors');
     for (let author of book.authors) {
-      let saveAuthor = await this.authorService.saveAuthor(author);
-      await this.authorService.addBookToAuthor(bookId, saveAuthor.id);
+      let saveAuthor = await this.authorService.saveAuthor(author.name, author.asin, author.link);
+      await this.authorService.addBookToAuthor(bookId, saveAuthor);
     }
 
     this.logger.debug('Book had ' + book.tags.length + ' tags');
     for (let tag of book.tags) {
-      await this.tagService.saveTag(bookId, tag);
+      let savedTag = await this.tagService.saveOrGetTag(tag);
+      await this.tagService.addTagToBook(bookId, savedTag);
     }
 
     this.logger.info('Book had ' + book.narrators.length + ' narrators');
     for (let narrator of book.narrators) {
       let saveNarrator = await this.narratorService.saveNarrator(narrator);
-      await this.narratorService.addBookToNarrator(bookId, saveNarrator.id);
+      await this.narratorService.addBookToNarrator(bookId, saveNarrator);
     }
 
     this.logger.info('Book had ' + book.categories.length + ' categories');
     for (let category of book.categories) {
-      let saveCategory = await this.categoryService.saveCategory(category.name, category.link);
-      await this.categoryService.addCategoryToBook(bookId, saveCategory.id);
+      let saveCategory = await this.categoryService.saveOrGetCategory(category.name, category.link);
+      await this.categoryService.addCategoryToBook(bookId, saveCategory);
     }
 
     return {

@@ -40,15 +40,22 @@ export class AudibleController {
   }
 
   async getSeriesWithBooks(user: User, res: Response<any, Record<string, any>, number>) {
-    this.logger.info('Getting series where the user has books: ' + user.id);
+    this.logger.info('Getting all series with books for user ' + user.id);
     let userBooksIds = await this.booksService.getBooksIdsByUser(user.id);
     let series = await this.seriesService.getSeriesFromBooks(userBooksIds);
     let archivedSeries = await this.userService.getArchivedSeries(user.id);
+
+    let allBookIds = [];
+    // we need to get all the book ids for the series wher the user has 1 or more books
+    series.forEach((series) => {
+      series.bookIds.forEach((bookId) => allBookIds.push(bookId));
+    });
+    let allBooks = await this.booksService.bulkGetBooks(allBookIds);
     let response = [];
     await Promise.all(
       series.map(async (s) => {
         this.logger.debug("Getting series '" + s.name + "' with books");
-        let books = await this.booksService.bulkGetBooks(s.bookIds);
+        let books = allBooks.filter((b) => s.bookIds.includes(b.id));
         response.push({
           id: s.id,
           name: s.name,
@@ -67,6 +74,7 @@ export class AudibleController {
               authors: b.authors,
               tags: b.tags,
               narrators: b.narrators,
+              categories: b.categories,
             };
           }),
         });

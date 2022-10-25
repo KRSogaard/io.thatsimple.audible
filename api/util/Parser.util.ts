@@ -9,7 +9,8 @@ const logger = new APILogger();
 
 export const parseBook = (htmlDom: string): ParseAudioBook => {
   logger.debug('Parsing book');
-  const $ = cheerio.load(htmlDom, null, false);
+  let $ = cheerio.load(htmlDom, null, false);
+
   let title = $('h1.bc-heading').first().text();
   if (!title || title.length === 0) {
     title = $("meta[property='og:title']").attr('content').trim();

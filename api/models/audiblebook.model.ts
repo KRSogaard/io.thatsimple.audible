@@ -9,7 +9,7 @@ export interface AudibleBook {
   lastUpdated?: Date;
   series?: AudibleSeriesBook[];
   authors?: AudibleAuthor[];
-  tags?: string[];
+  tags?: AudibleTag[];
   narrators?: AudibleNarrator[];
   categories?: AudibleCategory[];
 }
@@ -21,11 +21,18 @@ export interface AudibleSeries {
   summary: string;
   name: string;
   lastUpdated?: Date;
+  created?: Date;
   shouldDownload?: boolean;
 }
 
-export interface AudibleSeriesBook extends AudibleSeries {
+export interface AudibleSeriesBook {
+  id?: number;
+  asin: string;
+  link?: string;
+  summary?: string;
+  name: string;
   bookNumber: string;
+  created?: Date;
 }
 
 export interface AudibleAuthor {
@@ -33,19 +40,28 @@ export interface AudibleAuthor {
   asin: string;
   link: string;
   name: string;
+  created?: Date;
 }
 
 export interface AudibleNarrator {
   id?: number;
   name: string;
+  created?: Date;
 }
 
 export interface AudibleCategory {
   id?: number;
   name: string;
   link: string;
+  created?: Date;
 }
 
 export interface AudibleSeriesWithBooks extends AudibleSeries {
   bookIds: number[];
+}
+
+export interface AudibleTag {
+  id?: number;
+  tag: string;
+  created?: Date;
 }
