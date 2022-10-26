@@ -53,6 +53,10 @@ export const commands = [
     '  `summary` text COLLATE utf8mb4_unicode_ci,  ' +
     '  `last_updated` int DEFAULT NULL,  ' +
     '  `created` int DEFAULT NULL,  ' +
+    '  `categories` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `tags` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `narrators` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `authors` text COLLATE utf8mb4_unicode_ci, ' +
     '  PRIMARY KEY (`id`) ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=685 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 
