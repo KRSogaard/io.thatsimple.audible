@@ -10,19 +10,24 @@ let logger: APILogger;
 
 export const Download = async (): Promise<DownloadService> => {
   logger = new APILogger('DownloadConfig');
+  let client = axios.create();
 
   if (!instance) {
-    const proxyListUrl = process.env.PROXY_LIST_URL;
     let proxyList = [];
-    let reponse = await axios.get(proxyListUrl);
-    reponse.data.split('\n').forEach((proxy) => {
-      if (proxy.length > 0) {
-        proxyList.push({
-          host: proxy.split(':')[0],
-          port: proxy.split(':')[1].trim(),
-        });
-      }
-    });
+
+    const proxyListUrl = process.env.PROXY_LIST_URL;
+    if (proxyListUrl) {
+      logger.info(`Loading proxy list from ${proxyListUrl}`);
+      let reponse = await client.get(proxyListUrl);
+      reponse.data.split('\n').forEach((proxy) => {
+        if (proxy.length > 0) {
+          proxyList.push({
+            host: proxy.split(':')[0],
+            port: proxy.split(':')[1].trim(),
+          });
+        }
+      });
+    }
 
     logger.info('Found ' + proxyList.length + ' proxies');
     let caching: ICachingProvider = new MinioCachingProvider(MiniIOClient(), 'audible-webcache');

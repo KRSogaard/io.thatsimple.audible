@@ -95,6 +95,7 @@ export class AudibleManagementService {
       this.logger.debug('No user id provided, not adding book to user');
     }
 
+    this.logger.info('Finished downloading book ' + url);
     return hitAudibleUrl;
   }
 
@@ -155,18 +156,20 @@ export class AudibleManagementService {
       hitAudibleUrl = true;
     }
 
+    let start = Date.now();
     let book = Parser.parseBook(html);
-    if (book && book.link === 'https://www.audible.comundefined') {
-      this.logger.warn('Book link was undefined!!!!!!: ' + url);
-      await AsyncTools.delay(100000);
-      throw new FatalError('Undefined book link');
+    this.logger.debug('Parsing book took: ' + (Date.now() - start) + 'ms');
+    if (!book) {
+      throw new FatalError('Book can not be parsed, was it a preorder?');
     }
-
+    start = Date.now();
     let newBook = await this.bookService.saveBook(book.asin, book.link, book.title, book.runtime, book.released, book.summary);
-    this.logger.debug('Created or updated new book with id: ' + newBook.id);
+    this.logger.debug('Created or updated new book with id: ' + newBook.id + ' in ' + (Date.now() - start) + 'ms');
 
     if (newBook && book.image) {
+      start = Date.now();
       await this.downloadImageWithRetry(newBook, book.image);
+      this.logger.debug('Downloaded book image in: ' + (Date.now() - start) + 'ms');
     }
 
     let bookId = newBook.id;
@@ -312,14 +315,15 @@ export class AudibleManagementService {
       if (!html || html.length < 100) {
         throw new Error('Failed to download series html');
       }
+      let start = Date.now();
       let parsedSeries = Parser.parseSeries(html);
+      this.logger.debug('Parsing series took ' + (Date.now() - start) + ' ms');
       storedSeries = await this.seriesService.saveOrGetSeries(parsedSeries.asin, parsedSeries.name, parsedSeries.link, parsedSeries.summary);
       this.logger.debug('Series ' + storedSeries.name + ' has ' + parsedSeries.books.length + ' books');
 
       for (let book of parsedSeries.books) {
+        // Left this here to catch if any new issues pop up
         if (book && book.link === 'https://www.audible.comundefined') {
-          this.logger.warn('Book link was undefined from series!!!!!!: ' + url + ', ' + book.title + ', ' + book.asin);
-          await AsyncTools.delay(100000);
           throw new FatalError('Undefined book link from series');
         }
 
@@ -359,7 +363,7 @@ export class AudibleManagementService {
       }
     }
 
-    this.logger.debug('Finished downloading series: ' + storedSeries.name);
+    this.logger.info('Finished downloading series: ' + storedSeries.name);
     return hitAudibleUrl;
   }
 }

@@ -4,12 +4,20 @@ import * as timespan from 'timespan-parser';
 import * as moment from 'moment';
 import { APILogger } from '../../logger/api.logger';
 import { delay } from '../../util/Async.util';
+import { FatalError } from '../audible_management.service';
+import * as fs from 'fs';
 
 const logger = new APILogger('AudibleParser');
 
-export const parseBook = (htmlDom: string): ParseAudioBook => {
+export const parseBook = (htmlDom: string): ParseAudioBook | null => {
   logger.debug('Parsing book');
   let $ = cheerio.load(htmlDom, null, false);
+
+  let pageText = $('#center-1').text();
+  if (pageText.includes('Pre-order:')) {
+    logger.debug('Book is pre-order, skipping parsing');
+    return null;
+  }
 
   let title = $('h1.bc-heading').first().text();
   if (!title || title.length === 0) {
@@ -21,10 +29,18 @@ export const parseBook = (htmlDom: string): ParseAudioBook => {
     subtitle = null;
   }
 
-  let jsonData = htmlDom.match('"datePublished":\\s+"([^"]+)')[1].trim();
+  let jsonData = null;
   let released = 0;
-  if (jsonData) {
-    released = Math.floor(new Date(jsonData).getTime() / 1000);
+  fs.writeFileSync('C:\\temp\\test.html', htmlDom);
+  let dataPublishedMatched = htmlDom.match('"datePublished":\\s+"([^"]+)');
+  if (dataPublishedMatched && dataPublishedMatched.length > 1) {
+    jsonData = dataPublishedMatched[1].trim();
+    if (jsonData) {
+      released = Math.floor(new Date(jsonData).getTime() / 1000);
+    }
+  } else {
+    logger.error('Could not find datePublished for ' + title);
+    throw new FatalError('Could not find datePublished for ' + title);
   }
 
   let link = $("link[rel='canonical']").attr('href');
@@ -51,8 +67,11 @@ export const parseBook = (htmlDom: string): ParseAudioBook => {
     runtimeSeconds = Math.floor(moment.duration(jsonData).asMilliseconds() / 1000);
   } else {
     logger.debug('Did not find ISO time duration, trying to parse from text');
-    let runtime = $('li.runtimeLabel').text().split(':')[1].replace('hrs', 'h').replace('mins', 'm').replace('and', '').trim();
-    runtimeSeconds = timespan.parse(runtime);
+    let runtimeSplit = $('li.runtimeLabel').text().split(':');
+    if (runtimeSplit.length >= 2) {
+      let runtime = $('li.runtimeLabel').text().split(':')[1].replace('hrs', 'h').replace('mins', 'm').replace('and', '').trim();
+      runtimeSeconds = timespan.parse(runtime);
+    }
   }
 
   let summary = '';
@@ -157,6 +176,11 @@ export const parseSeries = (htmlDom: string): ParseSeries => {
       logger.warn('Book is not available on audible.com, skipping');
       return;
     }
+    if (dom.text().includes('Pre-order')) {
+      logger.warn('Book is not released yet, skipping');
+      return;
+    }
+
     let urlElement = dom.find('h3 a').attr('href')?.split('?')[0];
     if (!urlElement) {
       logger.warn('Could not find book url in series page, book may be unavalible skipping');

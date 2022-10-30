@@ -3018,11 +3018,6 @@
   "resolved" "https://registry.npmjs.org/kuler/-/kuler-2.0.0.tgz"
   "version" "2.0.0"
 
-"ky@^0.31.4":
-  "integrity" "sha512-OFuAD3riwhAfHK3J4FrhlujFRpm0ELBEfDHZfFpw89OTozQt3NLF39lNblUO5udj5vSkyaBKnLai/rFCzBfISQ=="
-  "resolved" "https://registry.npmjs.org/ky/-/ky-0.31.4.tgz"
-  "version" "0.31.4"
-
 "last-run@^1.1.0":
   "integrity" "sha512-U/VxvpX4N/rFvPzr3qG5EtLKEnNI0emvIQB3/ecEwv+8GHaUKbIB8vxv1Oai5FAF0d0r7LXHhLLe5K/yChm5GQ=="
   "resolved" "https://registry.npmjs.org/last-run/-/last-run-1.1.1.tgz"

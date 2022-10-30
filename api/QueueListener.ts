@@ -9,7 +9,7 @@ import * as Queue from './util/Queue.util';
 const waitTime = 0;
 
 export const QueueListener = async (index: number): Promise<void> => {
-  const logger = new APILogger('QueueListener-' + index);
+  const logger = new APILogger('QueueListener');
   logger.info('Starting queue listener');
   const userService = new UserService();
 
@@ -24,12 +24,14 @@ export const QueueListener = async (index: number): Promise<void> => {
   logger.info('Message listener started on queue "' + RabbitMQAudibleChannel() + '"');
 
   while (true) {
+    let start = Date.now();
     try {
       let message = await channel.get(RabbitMQAudibleChannel());
       if (!message) {
         await delay(1000);
         continue;
       }
+
       lastProcessingTime = new Date().getTime();
       let data = message.content.toString();
       logger.trace('Message received: ' + JSON.stringify(data));
@@ -65,26 +67,29 @@ export const QueueListener = async (index: number): Promise<void> => {
         }
 
         logger.error('Failed to download, will not retry: ' + error.message);
-        await delay(5000);
+        console.log('Error: ', error);
       }
       if (obj.jobId) {
         await userService.finishJob(obj.jobId);
       }
       channel.ack(message);
 
-      if (hitAudibleUrl) {
-        let timePassed = new Date().getTime() - lastProcessingTime;
-        logger.trace('Calculated wait time is ' + (waitTime - timePassed) + ' ms');
+      // if (hitAudibleUrl) {
+      //   let timePassed = new Date().getTime() - lastProcessingTime;
+      //   logger.trace('Calculated wait time is ' + (waitTime - timePassed) + ' ms');
 
-        if (timePassed < waitTime) {
-          logger.trace('Hit audible url, waiting for 2 seconds');
-          await delay(waitTime - timePassed);
-        } else {
-          logger.trace("Execution took longer then waitime, don't wait");
-        }
-      } else {
-        logger.trace("Didn't hit audible url, no need to wait");
-      }
+      //   if (timePassed < waitTime) {
+      //     logger.trace('Hit audible url, waiting for 2 seconds');
+      //     await delay(waitTime - timePassed);
+      //   } else {
+      //     logger.trace("Execution took longer then waitime, don't wait");
+      //   }
+      // } else {
+      //   logger.trace("Didn't hit audible url, no need to wait");
+      // }
+
+      let timePassed = new Date().getTime() - start;
+      logger.debug('Message processed in ' + timePassed + ' ms');
     } catch (error) {
       logger.error('Failed to process message: ' + error.message);
     }

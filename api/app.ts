@@ -1,6 +1,6 @@
 import * as bodyParser from 'body-parser';
-const path = require('path');
-import * as express from 'express';
+import path from 'path';
+import express from 'express';
 import { APILogger } from './logger/api.logger';
 import { ImageController } from './controller/image.controller';
 import { UserController } from './controller/user.controller';

@@ -65,6 +65,6 @@ export class APILogger {
   }
 
   fatal(message: string) {
-    this.logger.log('crit', message);
+    this.logger.log('error', message);
   }
 }

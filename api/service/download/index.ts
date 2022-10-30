@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import axios, { ResponseType, AxiosRequestConfig, AxiosProxyConfig } from 'axios';
+import axios, { ResponseType, AxiosRequestConfig, AxiosProxyConfig, AxiosInstance } from 'axios';
 import { NullCachingProvider } from './NullCachingProvider';
 import { APILogger } from '../../logger/api.logger';
 import ICachingProvider from './ICachingProvider';
@@ -36,9 +36,11 @@ export class DownloadService {
     'Linux PC/Firefox browser: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1',
     'Chrome OS/Chrome browser: Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36',
   ];
+  client: AxiosInstance;
 
   constructor(caching?: ICachingProvider, proxyList?: AxiosProxyConfig[]) {
     this.logger = new APILogger('DownloadService');
+    this.client = axios.create();
 
     if (caching) {
       this.logger.info('Creating DownloadService with caching provider: ' + caching.constructor.name);
@@ -71,24 +73,34 @@ export class DownloadService {
   }
 
   getAvalibleProxies(): AxiosProxyConfig[] {
-    return this.proxyList.filter((p) => !this.blockedProxies.some((b) => b.host == p.host && b.unban <= Date.now()));
+    let before = this.blockedProxies.length;
+    this.blockedProxies = this.blockedProxies.filter((p) => p.unban > Date.now());
+    let remove = before - this.blockedProxies.length;
+    if (remove > 0) {
+      this.logger.debug('Removed ' + remove + ' proxies from ban list');
+    }
+    this.logger.debug('Current blocked proxies: ' + this.blockedProxies.length);
+    return this.proxyList.filter((p) => !this.blockedProxies.some((b) => b.host === p.host));
   }
   getProxy(): AxiosProxyConfig | null {
     if (this.proxyList.length === 0) {
       return null;
     }
-    if (this.proxyList.length === 1) {
-      this.logger.debug('Using proxy: ' + this.proxyList[0].host);
-      return this.proxyList[0];
-    }
     let possibleProxies = this.getAvalibleProxies();
+    if (possibleProxies.length === 1) {
+      this.logger.debug('Using proxy: ' + possibleProxies[0].host + ':' + possibleProxies[0].port);
+      return possibleProxies[0];
+    }
     if (possibleProxies.length === 0) {
       this.logger.error('No more proxies available, all are blocked');
       throw new RetryableError('No more proxies available, all are blocked');
     }
     let index = crypto.randomInt(0, possibleProxies.length - 1);
-    this.logger.debug('Using proxy: ' + this.proxyList[index].host);
-    return this.proxyList[index];
+    this.logger.debug('Using proxy: ' + possibleProxies[index].host + ':' + possibleProxies[index].port);
+    if (this.blockedProxies.some((p) => p.host === possibleProxies[index].host)) {
+      throw new FatalError("How could we get a blocked proxy? It's not possible!");
+    }
+    return possibleProxies[index];
   }
 
   blockProxy(host: string, unban?: number): void {
@@ -101,13 +113,12 @@ export class DownloadService {
       host: host,
       unban: unbanTime,
     });
-    this.logger.warn('Blocking proxy: ' + host + ' for 10 min: ' + this.getAvalibleProxies().length + ' proxies left');
+    this.logger.debug('Proxy ' + host + ' is now blocked until ' + new Date(unbanTime).toLocaleString());
+    this.logger.warn(
+      'Blocking proxy: ' + host + ' for 10 min: ' + this.getAvalibleProxies().length + ' proxies left, ' + this.blockedProxies.length + ' blocked'
+    );
 
-    if (this.blockedProxies.length > this.proxyList.length / 2 && this.proxyList.length % 10 === 0) {
-      this.updateProxyBanFile();
-    } else {
-      fs.appendFileSync(path.join(__dirname, this.bannedProxiesFilename), host + ',' + unbanTime + '\n');
-    }
+    fs.appendFileSync(path.join(__dirname, this.bannedProxiesFilename), host + ',' + unbanTime + '\n');
   }
   updateProxyBanFile(): void {
     this.logger.debug('Removing proxies that are no longer banned from the ban file');
@@ -134,8 +145,11 @@ export class DownloadService {
     let config: AxiosRequestConfig = {
       headers: {
         'User-Agent': this.getUserAgent(),
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.5',
       },
       timeout: this.maxFetchTimeBan,
+      decompress: true,
     };
 
     if (this.proxyList && this.proxyList.length > 0) {
@@ -165,7 +179,7 @@ export class DownloadService {
     try {
       let start = Date.now();
       this.logger.trace('Downloading HTML from: ' + downloadUrl + ' with config: ' + JSON.stringify(config));
-      const { headers, status, data } = await axios.get(downloadUrl, config);
+      const { headers, status, data } = await this.client.get(downloadUrl, config);
       let time = Date.now() - start;
       this.logger.debug('Download of ' + downloadUrl + ' complete with status ' + status + ', took: ' + time + ' ms ');
       this.reportProxyStats(config, time);
@@ -210,7 +224,7 @@ export class DownloadService {
 
     try {
       let start = Date.now();
-      const { headers, status, data } = await axios.get(downloadUrl, config);
+      const { headers, status, data } = await this.client.get(downloadUrl, config);
       let time = Date.now() - start;
       this.logger.debug('Html status: ' + status + ' took: ' + time + ' ms ');
       this.reportProxyStats(config, time);
@@ -225,13 +239,13 @@ export class DownloadService {
 
   handleProxyErrors(error: any, proxy?: any) {
     switch (error.code) {
+      case 'ERR_BAD_RESPONSE':
       case 'ECONNRESET':
       case 'ECONNREFUSED':
       case 'ECONNABORTED':
       case 'ENOTFOUND':
       case 'ETIMEDOUT':
       case 'EPROTO':
-      case 'ERR_BAD_RESPONSE':
         this.logger.warn(error.code + ' error this is a retryable error');
         if (proxy) {
           this.blockProxy(error.config.proxy.host);
@@ -268,7 +282,7 @@ export class DownloadService {
           ' of ' +
           (this.successfullRequests + this.failedRequests) +
           ' (' +
-          Math.round(this.failedRequests / (this.successfullRequests + this.failedRequests)) * 100) +
+          Math.round((this.failedRequests / (this.successfullRequests + this.failedRequests)) * 100) +
           '%) requests failed: ' +
           JSON.stringify(this.errorCodes)
       );

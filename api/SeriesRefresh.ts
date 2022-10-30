@@ -37,9 +37,9 @@ export const SeriesRefresh = async (): Promise<void> => {
           await Queue.sendDownloadBook(b.link, null, null, true);
         }
       }
-      await delay(waitTime);
     } catch (error) {
       logger.error('Failed to process series updated: ' + error.message);
     }
+    await delay(waitTime);
   }
 };

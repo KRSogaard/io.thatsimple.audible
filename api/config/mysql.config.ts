@@ -25,7 +25,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
 
   try {
     pool = createPool({
-      connectionLimit: 100,
+      connectionLimit: 10,
       host: host,
       user: user,
       password: password,
@@ -54,13 +54,13 @@ const checkIfDatabaseExists = async (mysql: Pool): Promise<void> => {
     MySQLConnection().then(async (pool) => {
       try {
         let results = await runQuery(pool, 'SHOW TABLES', []);
-        if (results.length == commands.length) {
+        if (results.length >= commands.length) {
           logger.info('Database connection successful');
           resolve();
           return;
         }
 
-        logger.info('Database connection successful, but missing tables, creating tables');
+        logger.info('Database connection successful, but missing tables, creating tables. Found ' + results.length + ' tables, expected ' + commands.length);
 
         try {
           for (let i = 0; i < commands.length; i++) {
@@ -95,18 +95,23 @@ const runQuery = async (pool: Pool, sqlQuery: string, values: any | any[]): Prom
 
 export const MySQLCheck = (): void => {
   if (!process.env.DB_HOST) {
+    logger.error('DB_HOST not set');
     throw new Error('DB_HOST is not defined');
   }
   if (!process.env.DB_PORT) {
+    logger.error('DB_PORT not set');
     throw new Error('DB_PORT is not defined');
   }
   if (!process.env.DB_USER) {
+    logger.error('DB_USER not set');
     throw new Error('DB_USER is not defined');
   }
   if (!process.env.DB_PASSWORD) {
+    logger.error('DB_PASSWORD not set');
     throw new Error('DB_PASSWORD is not defined');
   }
   if (!process.env.DB_NAME) {
+    logger.error('DB_NAME not set');
     throw new Error('DB_NAME is not defined');
   }
 };
