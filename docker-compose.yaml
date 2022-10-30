@@ -1,45 +1,45 @@
 version: '3'
 services:
-  audible-ui:
-    build:
-      context: ./ui
-      dockerfile: Dockerfile.dev
-    ports:
-      - 3000:3000
-    volumes:
-      - ./ui/src:/usr/app/src
-      - ./ui/public:/usr/app/public
-    depends_on:
-      - audible-api
-    environment:
-      - REST_API_URL=http://audible-api:3080
-    stdin_open: true
-    tty: true
+  # audible-ui:
+  #   build:
+  #     context: ./ui
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./ui/src:/usr/app/src
+  #     - ./ui/public:/usr/app/public
+  #   depends_on:
+  #     - audible-api
+  #   environment:
+  #     - REST_API_URL=http://audible-api:3080
+  #   stdin_open: true
+  #   tty: true
 
-  audible-api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile.dev
-    command: npm run dev
-    volumes:
-      - ./api:/usr/app/
-      - /usr/app/node_modules
-    ports:
-      - 3080:3080
-    depends_on:
-      - mysql-db
-    environment:
-      DB_HOST: mysql-db
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: 12345
-      DB_NAME: audible
-      MINIO_END_POINT: minio
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: myuser
-      RABBITMQ_PASS: mypassword
+  # audible-api:
+  #   build:
+  #     context: ./api
+  #     dockerfile: Dockerfile.dev
+  #   command: npm run dev
+  #   volumes:
+  #     - ./api:/usr/app/
+  #     - /usr/app/node_modules
+  #   ports:
+  #     - 3080:3080
+  #   depends_on:
+  #     - mysql-db
+  #   environment:
+  #     DB_HOST: mysql-db
+  #     DB_PORT: 3306
+  #     DB_USER: root
+  #     DB_PASSWORD: 12345
+  #     DB_NAME: audible
+  #     MINIO_END_POINT: minio
+  #     MINIO_ACCESS_KEY: minio
+  #     MINIO_SECRET_KEY: minio123
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_USER: myuser
+  #     RABBITMQ_PASS: mypassword
 
   mysql-db:
     image: mysql:latest

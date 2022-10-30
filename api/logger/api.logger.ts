@@ -1,64 +1,70 @@
 // import * as pino from 'pino';
-
-// const logger = pino.default({
-//   level: 'trace',
-//   transport: {
-//     target: 'pino-pretty',
-//     options: {
-//       colorize: true,
-//       singleLine: true,
-//     },
-//   },
-// });
+import * as winston from 'winston';
 
 export class APILogger {
-  trace(message: string, ...data: any[]) {
-    return;
-    if (data) {
-      console.log('[TRACE] ' + message, ...data);
-    } else {
-      console.log('[TRACE] ' + message);
-    }
+  logger: winston.Logger;
+
+  constructor(name?: string) {
+    let alignColorsAndTime = winston.format.combine(
+      winston.format.colorize({
+        all: true,
+      }),
+      winston.format.label({
+        label: '[' + name + ']',
+      }),
+      winston.format.timestamp({
+        // format: 'YY-MM-DD HH:mm:ss',
+        format: 'HH:mm:ss',
+      }),
+      winston.format.printf((info) => ` ${info.timestamp} ${info.label} ${info.level}: ${info.message}`)
+    );
+
+    this.logger = winston.createLogger({
+      level: 'debug',
+      format: winston.format.json(),
+      defaultMeta: { service: 'user-service' },
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(winston.format.colorize(), alignColorsAndTime),
+        }),
+        new winston.transports.File({
+          filename: 'AudibleSeries.log',
+          format: winston.format.combine(
+            winston.format.label({
+              label: '[' + name + ']',
+            }),
+            winston.format.timestamp({
+              // format: 'YY-MM-DD HH:mm:ss',
+              format: 'HH:mm:ss',
+            }),
+            winston.format.printf((info) => ` ${info.timestamp} ${info.label} ${info.level}: ${info.message}`)
+          ),
+        }),
+      ],
+    });
   }
 
-  debug(message: string, ...data: any[]) {
-    return;
-    if (data && data.length > 0) {
-      console.log('[DEBUG] ' + message, ...data);
-    } else {
-      console.log('[DEBUG] ' + message);
-    }
+  trace(message: string) {
+    this.logger.log('silly', message);
   }
 
-  info(message: string, ...data: any[]) {
-    if (data && data.length > 0) {
-      console.info('[INFO] ' + message, ...data);
-    } else {
-      console.info('[INFO] ' + message);
-    }
+  debug(message: string) {
+    this.logger.log('debug', message);
   }
 
-  warn(message: string, ...data: any[]) {
-    if (data && data.length > 0) {
-      console.warn('[WARN] ' + message, ...data);
-    } else {
-      console.warn('[WARN] ' + message);
-    }
+  info(message: string) {
+    this.logger.log('info', message);
   }
 
-  error(message: string, ...data: any[]) {
-    if (data && data.length > 0) {
-      console.error('[ERROR] ' + message, ...data);
-    } else {
-      console.error('[ERROR] ' + message);
-    }
+  warn(message: string) {
+    this.logger.log('warn', message);
   }
 
-  fatal(message: string, ...data: any[]) {
-    if (data && data.length > 0) {
-      console.error('[FATAL] ' + message, ...data);
-    } else {
-      console.error('[FATAL] ' + message);
-    }
+  error(message: string) {
+    this.logger.log('error', message);
+  }
+
+  fatal(message: string) {
+    this.logger.log('crit', message);
   }
 }

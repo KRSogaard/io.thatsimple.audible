@@ -1,9 +1,9 @@
 import { RabbitMQConnection, RabbitMQAudibleChannel } from '../config/rabbitmq.config';
 import { APILogger } from '../logger/api.logger';
-const logger = new APILogger();
+const logger = new APILogger('Queue');
 
 export const sendDownloadBook = async (url: string, jobId: number | null, userId: number, addToUser: boolean, force?: boolean): Promise<void> => {
-  logger.debug('Sending download book request: ', url);
+  logger.debug('Sending download book request: ' + url);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
       //await channel.assertQueue(RabbitMQAudibleChannel());
@@ -25,7 +25,7 @@ export const sendDownloadBook = async (url: string, jobId: number | null, userId
 };
 
 export const sendDownloadSeries = async (url: string, jobId: number | null, userId?: number, force?: boolean): Promise<void> => {
-  logger.debug('Sending download series request: ', url);
+  logger.debug('Sending download series request: ' + url);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
       //await channel.assertQueue(RabbitMQAudibleChannel());

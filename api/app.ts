@@ -4,7 +4,7 @@ import * as express from 'express';
 import { APILogger } from './logger/api.logger';
 import { ImageController } from './controller/image.controller';
 import { UserController } from './controller/user.controller';
-import { AudibleUserService } from './service/user.service';
+import { UserService } from './service/dal/user';
 import { AudibleController } from './controller/audible.controller';
 var cors = require('cors');
 
@@ -13,7 +13,7 @@ class App {
   logger: APILogger;
   imageController: ImageController;
   userController: UserController;
-  userService: AudibleUserService;
+  userService: UserService;
   audibleService: AudibleController;
 
   protectedPaths = [
@@ -53,11 +53,11 @@ class App {
     this.express = express();
     this.middleware();
     this.routes();
-    this.logger = new APILogger();
+    this.logger = new APILogger('App');
 
     this.imageController = new ImageController();
     this.userController = new UserController();
-    this.userService = new AudibleUserService();
+    this.userService = new UserService();
     this.audibleService = new AudibleController();
   }
 
@@ -86,8 +86,6 @@ class App {
       let token = null;
       if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
         token = req.headers.authorization.substring(7);
-        this.logger.debug('Token: ' + token);
-
         let user = await this.userService.getUserByToken(token);
         if (!user) {
           res.status(401).send('Unauthorized');

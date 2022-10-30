@@ -12,7 +12,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
   if (pool) {
     return pool;
   }
-  logger = new APILogger();
+  logger = new APILogger('MySQLConfig');
 
   MySQLCheck();
 
@@ -21,7 +21,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
   const user = process.env.DB_USER;
   const password = process.env.DB_PASSWORD;
   const name = process.env.DB_NAME;
-  logger.info('Setting up Mysql Connection :::', host, port, user, name);
+  logger.info('Setting up Mysql Connection ' + host + ':' + port + ', ' + user + ', ' + name);
 
   try {
     pool = createPool({
@@ -35,7 +35,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
     const oldQuery = pool.query;
     pool.query = function (...args): any {
       const queryCmd = oldQuery.apply(pool, args);
-      logger.trace('Executing query', ...args);
+      logger.trace('Executing query: ' + JSON.stringify(args));
       return queryCmd;
     };
 
@@ -44,7 +44,7 @@ export const MySQLConnection = async (): Promise<Pool> => {
     logger.info('MySql Adapter Pool generated successfully');
     return pool;
   } catch (error) {
-    logger.error('[mysql.connector][init][Error]: ', error);
+    logger.error('Failed to create database connection: ' + error.message);
     throw new Error('failed to initialized pool');
   }
 };
@@ -64,18 +64,18 @@ const checkIfDatabaseExists = async (mysql: Pool): Promise<void> => {
 
         try {
           for (let i = 0; i < commands.length; i++) {
-            logger.trace('Creating table', commands[i]);
+            logger.trace('Creating table:" ' + commands[i]);
             await runQuery(pool, commands[i], []);
             logger.info('Tables created');
           }
         } catch (error) {
-          logger.error('Failed to create table', error);
+          logger.error('Failed to create table: ' + error.message);
           reject(error);
           return;
         }
         resolve();
       } catch (error) {
-        logger.error('Failed to check if database exists', error);
+        logger.error('Failed to check if database exists: ' + error.message);
         throw new Error('Failed to check if database exists');
       }
       reject('Failed to check if database exists');

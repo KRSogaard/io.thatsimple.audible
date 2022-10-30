@@ -1,11 +1,11 @@
 import * as http from 'http';
 import App from './app';
 import { APILogger } from './logger/api.logger';
-import { RabbitMQConnection, RabbitMQAudibleChannel, RabbitMQCheck } from './config/rabbitmq.config';
-import { AudibleManagementService } from './service/audible_management.service';
-import { AudibleUserService } from './service/user.service';
+import { RabbitMQCheck } from './config/rabbitmq.config';
 import { MySQLConnection, MySQLCheck } from './config/mysql.config';
 import { MinIOCheck } from './config/minio.config';
+import { QueueListener } from './QueueListener';
+import { SeriesRefresh } from './SeriesRefresh';
 require('dotenv').config();
 
 // HERE FOR FAST FAILS
@@ -13,98 +13,47 @@ MinIOCheck();
 MySQLCheck();
 RabbitMQCheck();
 
-const port = process.env.PORT || 3080;
-const waitTime = 2000;
-
-App.set('port', port);
-const server = http.createServer(App);
-server.listen(port);
-
-const logger = new APILogger();
-const audibleManagementService = new AudibleManagementService();
-const userService = new AudibleUserService();
-
-logger.info('Creating database connection');
+// Lets open the connection
 MySQLConnection();
 
-server.on('listening', function (): void {
-  const addr = server.address();
-  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-  logger.info(`Listening on ` + bind);
-});
+const workersOnly = process.env.WORKERS_ONLY;
 
-function delay(milliseconds: number) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+const logger = new APILogger('Root');
+
+// Download().then(async (download) => {
+//   for (let i = 0; i < 100; i++) {
+//     try {
+//       let image = await download.downloadImage('https://m.media-amazon.com/images/I/51+EyQja6PL._SL500_.jpg');
+//       console.log('Image: ', image.length);
+//     } catch (error) {
+//       if (error instanceof RetryableError) {
+//         console.log('Retryable error:', error);
+//         await delay(10000);
+//       } else {
+//         console.log('Fatal error:', error);
+//         throw error;
+//       }
+//     }
+//   }
+// });
+
+if (!workersOnly) {
+  const port = process.env.PORT || 3080;
+
+  App.set('port', port);
+  const server = http.createServer(App);
+  server.listen(port);
+
+  server.on('listening', function (): void {
+    const addr = server.address();
+    const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+    logger.info(`Listening on ` + bind);
+  });
+} else {
+  logger.info('Workers only mode');
 }
 
-let lastProcessingTime = 0;
-
-RabbitMQConnection().then((connection) => {
-  connection.createChannel().then(async (channel) => {
-    channel.assertQueue(RabbitMQAudibleChannel(), { durable: false });
-    channel.prefetch(1);
-    logger.info('Message listener started on queue "' + RabbitMQAudibleChannel() + '"');
-    while (true) {
-      try {
-        let message = await channel.get(RabbitMQAudibleChannel());
-        if (!message) {
-          await delay(1000);
-          continue;
-        }
-        lastProcessingTime = new Date().getTime();
-        let data = message.content.toString();
-        logger.trace('Message received', data);
-        let obj;
-        try {
-          obj = JSON.parse(data);
-        } catch (error) {
-          logger.error('Failed to parse message', null);
-          channel.ack(message);
-          continue;
-        }
-
-        let url = obj.url?.split('?')[0];
-        let userId = obj.userId ? obj.userId : null;
-        let addToUser = obj.addToUser ? obj.addToUser : false;
-
-        let hitAudibleUrl = false;
-        try {
-          if (obj.type === 'book') {
-            logger.info('Processing book download request', url);
-            hitAudibleUrl = await audibleManagementService.downloadBook(url, userId, addToUser, obj.force);
-          } else if (obj.type == 'series') {
-            logger.info('Processing series download request', url);
-            hitAudibleUrl = await audibleManagementService.downloadSeries(url, userId, obj.force);
-          } else {
-            logger.error('Unknown message type');
-          }
-        } catch (error) {
-          logger.error('Failed to download, will not retry', error);
-        } finally {
-          channel.ack(message);
-          if (obj.jobId) {
-            await userService.finishJob(obj.jobId);
-          }
-        }
-
-        if (hitAudibleUrl) {
-          let timePassed = new Date().getTime() - lastProcessingTime;
-          logger.trace('Calculated wait time is ' + (waitTime - timePassed) + ' ms');
-
-          if (timePassed < waitTime) {
-            logger.trace('Hit audible url, waiting for 2 seconds');
-            await delay(waitTime - timePassed);
-          } else {
-            logger.trace("Execution took longer then waitime, don't wait");
-          }
-        } else {
-          logger.trace("Didn't hit audible url, no need to wait");
-        }
-      } catch (error) {
-        logger.error('Failed to process message', error);
-      }
-    }
-  });
-});
+QueueListener(1);
+SeriesRefresh();
 
 module.exports = App;

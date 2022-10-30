@@ -53,10 +53,10 @@ export const commands = [
     '  `summary` text COLLATE utf8mb4_unicode_ci,  ' +
     '  `last_updated` int DEFAULT NULL,  ' +
     '  `created` int DEFAULT NULL,  ' +
-    '  `categories` text COLLATE utf8mb4_unicode_ci, ' +
-    '  `tags` text COLLATE utf8mb4_unicode_ci, ' +
-    '  `narrators` text COLLATE utf8mb4_unicode_ci, ' +
-    '  `authors` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `categories_cache` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `tags_cache` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `narrators_cache` text COLLATE utf8mb4_unicode_ci, ' +
+    '  `authors_cache` text COLLATE utf8mb4_unicode_ci, ' +
     '  PRIMARY KEY (`id`) ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=685 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 
@@ -84,7 +84,7 @@ export const commands = [
     '  PRIMARY KEY (`id`) ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=215 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 
-  'CREATE TABLE IF NOT EXISTS `books_authors` ( ' +
+  'CREATE TABLE IF NOT EXISTS `authors_books` ( ' +
     '  `id` int NOT NULL AUTO_INCREMENT,  ' +
     '  `book_id` int DEFAULT NULL,  ' +
     '  `author_id` int DEFAULT NULL,  ' +
@@ -92,8 +92,8 @@ export const commands = [
     '  PRIMARY KEY (`id`),  ' +
     '  KEY `book_id` (`book_id`),  ' +
     '  KEY `author_id` (`author_id`),  ' +
-    '  CONSTRAINT `books_authors_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,  ' +
-    '  CONSTRAINT `books_authors_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`) ON DELETE CASCADE ' +
+    '  CONSTRAINT `authors_books_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,  ' +
+    '  CONSTRAINT `authors_books_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`) ON DELETE CASCADE ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=708 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ',
 
   'CREATE TABLE IF NOT EXISTS `categories_books` ( ' +
@@ -137,8 +137,7 @@ export const commands = [
     '  `id` int NOT NULL AUTO_INCREMENT,  ' +
     '  `tag` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,  ' +
     '  `created` int DEFAULT NULL,  ' +
-    '  PRIMARY KEY (`id`),  ' +
-    '  KEY `book_id` (`book_id`)  ' +
+    '  PRIMARY KEY (`id`)  ' +
     ') ENGINE=InnoDB AUTO_INCREMENT=1543 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ',
 
   'CREATE TABLE IF NOT EXISTS `tags_books` ( ' +

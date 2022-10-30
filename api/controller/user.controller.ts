@@ -1,15 +1,14 @@
 import { APILogger } from '../logger/api.logger';
-import { AudibleUserService } from '../service/user.service';
+import { UserService, RegisterUser } from '../service/dal/user';
 import * as UserUtil from '../util/User.util';
-import { User, RegisterUser } from '../models/user.model';
 
 export class UserController {
   private logger: APILogger;
-  userService: AudibleUserService;
+  userService: UserService;
 
   constructor() {
-    this.logger = new APILogger();
-    this.userService = new AudibleUserService();
+    this.logger = new APILogger('UserController');
+    this.userService = new UserService();
   }
 
   async authUser(username: string, password: string, res: any): Promise<void> {
@@ -38,7 +37,7 @@ export class UserController {
   }
 
   async registerUser(username: string, password: string, email: string, res): Promise<void> {
-    this.logger.info('UserController: RegisterUser', email);
+    this.logger.info('UserController: RegisterUser with email: ' + email);
     if (!username || username.length < 3 || !password || password.length < 3 || !email || email.length < 3 || !UserUtil.validateEmail(email)) {
       this.logger.debug('Invalid username or password or email');
       res.status(400).send('Required fields missing');
@@ -74,7 +73,8 @@ export class UserController {
   }
 
   async getCurrentJobs(user: any, res: any): Promise<void> {
-    this.logger.info('UserController: getCurrentJobs: ' + user.username);
+    // This API is called constantly, so we don't want to log it too much
+    this.logger.trace('UserController: getCurrentJobs: ' + user.username);
     let jobs = await this.userService.getCurrentJobs(user.id);
     res.status(200).send(jobs);
   }

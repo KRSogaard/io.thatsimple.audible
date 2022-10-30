@@ -5,7 +5,7 @@ export class ImageController {
   private logger: APILogger;
 
   constructor() {
-    this.logger = new APILogger();
+    this.logger = new APILogger('ImageController');
   }
 
   async getImage(bookId: string, res): Promise<void> {

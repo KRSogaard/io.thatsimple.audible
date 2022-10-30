@@ -9,7 +9,7 @@ export const MiniIOClient = (): Minio.Client => {
   if (minioClient) {
     return minioClient;
   }
-  logger = new APILogger();
+  logger = new APILogger('MinioConfig');
 
   MinIOCheck();
 
@@ -17,7 +17,7 @@ export const MiniIOClient = (): Minio.Client => {
   const port = process.env.MINIO_PORT;
   const accessKey = process.env.MINIO_ACCESS_KEY;
   const secretKey = process.env.MINIO_SECRET_KEY;
-  logger.info('Setting up MinIO Client :::', endPoint, accessKey);
+  logger.info('Setting up MinIO Client ' + endPoint + ', ' + accessKey);
 
   minioClient = new Minio.Client({
     endPoint: endPoint,
@@ -34,7 +34,7 @@ export const MiniIOClient = (): Minio.Client => {
         await minioClient.makeBucket('audiobook-images', 'us-east-1');
       }
     } catch (error) {
-      logger.error('Error creating bucket "audiobook-images"', error);
+      logger.error('Error creating bucket "audiobook-images": ' + error.message);
     }
   });
 
@@ -57,7 +57,7 @@ export const MiniIOClient = (): Minio.Client => {
         });
       }
     } catch (error) {
-      logger.error('Error creating bucket "audiobook-images"', error);
+      logger.error('Error creating bucket "audiobook-images": ' + error.message);
     }
   });
 

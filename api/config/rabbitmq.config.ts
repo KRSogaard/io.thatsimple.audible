@@ -9,14 +9,14 @@ export const RabbitMQConnection = async (): Promise<Connection> => {
   if (connection) {
     return connection;
   }
-  logger = new APILogger();
+  logger = new APILogger('RabbitMQConfig');
 
   RabbitMQCheck();
 
   const endPoint = process.env.RABBITMQ_HOST;
   const accessKey = process.env.RABBITMQ_USER;
   const secretKey = process.env.RABBITMQ_PASS;
-  logger.info('Setting up RabbitMQ Connection :::', endPoint, accessKey);
+  logger.info('Setting up RabbitMQ Connection ' + endPoint + ', ' + accessKey);
 
   connection = await connect('amqp://' + accessKey + ':' + secretKey + '@' + endPoint);
   return connection;
