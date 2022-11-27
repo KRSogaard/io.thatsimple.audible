@@ -1,54 +1,114 @@
 import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import SeriesPage from './pages/SeriesPage';
+import { BrowserRouter, Routes, Route, Navigate, useRouteError, useLocation } from 'react-router-dom';
+import { SeriesPage } from './pages/SeriesPage';
 import LoginPage from './pages/LoginPage';
-import Header from './components/Header';
+import Header from './components/PageLayout/Header';
 import ImportPage from './pages/ImportPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import RequireAuth from './components/RequireAuth';
+import RequireAuthRoute from './components/RequireAuthRoute';
 import 'antd/dist/antd.min.css';
 import { Layout } from 'antd';
 import { Helmet } from 'react-helmet-async';
+import { ErrorBoundary } from 'react-error-boundary';
+import { UnauthorizedError } from './services/Errors';
+import AudibleService from './services/AudibleService';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { PageLayout } from './components/PageLayout';
+import { sortSeries } from './pages/SeriesPage/SeriesUtils';
+import { SeriesList, SeriesType } from './pages/SeriesPage/components/SeriesList';
+
+function ErrorFallback() {
+  let error: Error | null = useRouteError() as Error | null;
+  let location = useLocation();
+  if (error instanceof UnauthorizedError) {
+    console.log('UnauthorizedError redirecting to signin');
+    AudibleService.logout();
+    return <Navigate to={'/signin?redirect=' + location.pathname} />;
+  }
+  console.log('ErrorFallback: ', error);
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre>{error?.message}</pre>
+    </div>
+  );
+}
 
 function App() {
+  const router = createBrowserRouter([
+    {
+      element: <PageLayout />,
+      errorElement: <ErrorFallback />,
+      children: [
+        {
+          path: '/',
+          element: <HomePage />,
+        },
+        {
+          path: '/series',
+          element: <RequireAuthRoute />,
+          children: [
+            {
+              id: 'series',
+              path: '/series',
+              loader: async () => {
+                if (!AudibleService.isAuthenticated()) {
+                  return null;
+                }
+                console.log('Calling to get data');
+                let myData = await AudibleService.getMyData();
+                return sortSeries(myData);
+              },
+              element: <SeriesPage />,
+              children: [
+                {
+                  path: '/series/',
+                  element: <SeriesList seriesType={SeriesType.ACTIVE} />,
+                },
+                {
+                  path: '/series/active',
+                  element: <SeriesList seriesType={SeriesType.ACTIVE} />,
+                },
+                {
+                  path: '/series/completed',
+                  element: <SeriesList seriesType={SeriesType.COMPLETED} />,
+                },
+                {
+                  path: '/series/archived',
+                  element: <SeriesList seriesType={SeriesType.ARCHIVED} />,
+                },
+              ],
+            },
+            {
+              path: '/series/import',
+              element: <ImportPage />,
+              loader: async () => {
+                return await AudibleService.getJobs();
+              },
+            },
+          ],
+        },
+        {
+          path: '/signin',
+          element: <LoginPage />,
+        },
+        {
+          path: '/signup',
+          element: <RegisterPage />,
+        },
+      ],
+    },
+  ]);
+
   return (
     <div className="App">
-      <BrowserRouter>
-        <Helmet titleTemplate="%s - audible.thatsimple.io" defaultTitle="audible.thatsimple.io">
-          <meta name="description" content="Audible series manager" />
-        </Helmet>
+      <Helmet titleTemplate="%s - Audible Series Manager" defaultTitle="Audible Series Manager">
+        <meta name="description" content="Audible Series Manager" />
+      </Helmet>
 
-        <Layout style={{ minHeight: '100vh' }}>
-          <Layout.Header>
-            <Header />
-          </Layout.Header>
-          <Layout.Content>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route
-                path="/series"
-                element={
-                  <RequireAuth>
-                    <SeriesPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/import"
-                element={
-                  <RequireAuth>
-                    <ImportPage />
-                  </RequireAuth>
-                }
-              />
-              <Route path="/signin" element={<LoginPage />} />
-              <Route path="/signup" element={<RegisterPage />} />
-            </Routes>
-          </Layout.Content>
-          {/* <Layout.Footer>Footer</Layout.Footer> */}
-        </Layout>
-      </BrowserRouter>
+      <RouterProvider router={router} />
     </div>
   );
 }

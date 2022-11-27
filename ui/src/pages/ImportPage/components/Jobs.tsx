@@ -42,8 +42,8 @@ const Jobs = (props: any) => {
               <Col>
                 <Text>
                   {' '}
-                  Please know you share a queue with other users and they jobs will not show uo here, that is the reason that jobs are not being processed right
-                  away.
+                  Please know you share a queue with other users and their jobs will not show up here, that is the reason that jobs are not being processed
+                  right away.
                 </Text>
               </Col>
             </Row>

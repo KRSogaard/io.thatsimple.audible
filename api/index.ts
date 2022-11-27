@@ -39,9 +39,6 @@ const runApp = async (): Promise<void> => {
     } else {
       logger.info('Workers only mode');
     }
-
-    QueueListener(1);
-    SeriesRefresh();
   } catch (error) {
     console.log('Fatal error:', error);
   }

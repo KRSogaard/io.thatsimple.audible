@@ -1,3 +1,5 @@
+import { UnauthorizedError } from './Errors';
+
 class AudibleService {
   private userToken: string | null;
   private userTokenExpires: number | null;
@@ -24,12 +26,12 @@ class AudibleService {
 
   public getToken() {
     if (!this.userToken) {
-      throw new Error('Not authenticated');
+      throw new UnauthorizedError();
     }
     if (this.userTokenExpires && this.userTokenExpires < Date.now()) {
       return this.userToken;
     }
-    throw new Error('Token expired');
+    throw new UnauthorizedError();
   }
 
   public isAuthenticated(): boolean {
@@ -114,6 +116,10 @@ class AudibleService {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.getToken() },
     });
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
+
     let data = await response.json();
     let series: SeriesDataResponse[] = [];
     data.series.forEach((s: any) => {
@@ -150,6 +156,8 @@ class AudibleService {
     try {
       if (response.status === 200) {
         return true;
+      } else if (response.status === 401) {
+        throw new UnauthorizedError();
       }
     } catch (e) {
       console.error('Error: ', e);
@@ -165,6 +173,8 @@ class AudibleService {
     try {
       if (response.status === 200) {
         return true;
+      } else if (response.status === 401) {
+        throw new UnauthorizedError();
       }
     } catch (e) {
       console.error('Error: ', e);
@@ -177,6 +187,9 @@ class AudibleService {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.getToken() },
     });
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
     return await response.json();
   }
 
@@ -189,6 +202,8 @@ class AudibleService {
     try {
       if (response.status === 200) {
         return true;
+      } else if (response.status === 401) {
+        throw new UnauthorizedError();
       }
     } catch (e) {
       console.error('Error: ', e);

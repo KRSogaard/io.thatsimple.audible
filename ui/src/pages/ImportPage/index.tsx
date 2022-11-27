@@ -5,8 +5,11 @@ import Parser from '@gregoranders/csv';
 import { Helmet } from 'react-helmet-async';
 import { Card, Breadcrumb, Input, Row, Col, Button, Typography, List } from 'antd';
 import Jobs from './components/Jobs';
+import { useLoaderData } from 'react-router';
 
 function ImportPage() {
+  const initalJobs: Job[] | null = useLoaderData() as Job[] | null;
+
   const siteMap =
     '{"_id":"audible","startUrl":["https://www.audible.com/library/audiobooks?pageSize=50"],"selectors":[{"id":"pagination","parentSelectors":["_root","pagination"],"paginationType":"auto","selector":".nextButton:not(.bc-button-disabled) a","type":"SelectorPagination"},{"id":"books","parentSelectors":["pagination"],"type":"SelectorElement","selector":"div.adbl-library-content-row","multiple":true},{"id":"title","parentSelectors":["books"],"type":"SelectorText","selector":"span.bc-size-headline3","multiple":false,"regex":""},{"id":"author","parentSelectors":["books"],"type":"SelectorText","selector":".authorLabel a","multiple":false,"regex":""},{"id":"book-link","parentSelectors":["books"],"type":"SelectorLink","selector":".bc-list-item > a","multiple":false}]}';
   const [importText, setImportText] = useState('');
@@ -14,20 +17,27 @@ function ImportPage() {
   const [canImport, setCanImport] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
+  const [exception, setException] = useState<Error | null>(null);
+  if (exception) {
+    throw exception;
+  }
 
   useEffect(() => {
-    async function _() {
-      setJobs(await AudibleService.getJobs());
-    }
-    _();
-  }, []);
+    console.log('Setting jobs: ', initalJobs);
+    setJobs(initalJobs || []);
+  }, [initalJobs]);
 
   useEffect(() => {
     setCanImport(importText.length > 0 && importText.trim().startsWith('web-scraper-order'));
   }, [importText]);
 
   useInterval(async () => {
-    setJobs(await AudibleService.getJobs());
+    try {
+      setJobs(await AudibleService.getJobs());
+    } catch (e: any) {
+      console.log('Got error:', e);
+      setException(e);
+    }
   }, delay);
 
   const startImport = async () => {
