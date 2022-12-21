@@ -8,10 +8,10 @@ const TimeSpan = (props: any) => {
   let text = '';
   let title = '';
   if (job.type === 'book') {
-    title = 'Downloading book ' + payload.title;
+    title = 'Downloading book ASIN: ' + payload.asin;
     text = 'Job id: ' + job.id;
   } else if (job.type === 'series') {
-    title = 'Downloading series ' + payload.name;
+    title = 'Downloading series ASIN: ' + payload.asin;
     text = 'Job id: ' + job.id;
   }
 

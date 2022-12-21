@@ -54,7 +54,12 @@ function ImportPage() {
           return;
         }
 
-        await AudibleService.requestDownload(row[6].split('?')[0]);
+        let asin: string | undefined = row[6]?.split('?')[0]?.split('/')?.pop();
+        if (!asin) {
+          console.log('No asin found', row[6]);
+        } else {
+          await AudibleService.requestDownload(asin);
+        }
       });
     } catch (e) {
       console.error('Failed while importing', e);

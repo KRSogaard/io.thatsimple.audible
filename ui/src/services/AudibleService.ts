@@ -193,11 +193,11 @@ class AudibleService {
     return await response.json();
   }
 
-  public async requestDownload(bookUrl: string) {
+  public async requestDownload(bookAsin: string) {
     const response = await fetch(this.baseUri + '/book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.getToken() },
-      body: JSON.stringify({ bookUrl: bookUrl }),
+      body: JSON.stringify({ asin: bookAsin }),
     });
     try {
       if (response.status === 200) {
@@ -225,6 +225,7 @@ export interface SeriesDataResponse {
   name: string;
   link: string;
   summary: string;
+  lastChecked: number;
   books: BookDataResponse[];
   latestBook?: BookDataResponse;
 }

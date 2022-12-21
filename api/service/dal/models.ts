@@ -77,6 +77,7 @@ export interface AudibleSeries {
   summary: string;
   name: string;
   lastUpdated: number;
+  lastChecked: number;
   created: number;
 }
 

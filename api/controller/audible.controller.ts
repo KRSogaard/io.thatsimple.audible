@@ -20,22 +20,15 @@ export class AudibleController {
     this.booksService = new BookService();
   }
 
-  async requestBookDownload(user: User, bookUrl: string, res: Response<any, Record<string, any>, number>) {
-    // Trying to get title from url
-    let urlSplit = bookUrl.split('?')[0].split('/');
-    urlSplit.pop(); // thow out the last part of the url as it is the asin
-    let title = urlSplit.pop()?.replace('-Audiobook', '').replace(/-/g, ' ');
-
+  async requestBookDownload(user: User, asin: string, res: Response<any, Record<string, any>, number>) {
     let jobId = await this.userService.createJob(
       user.id,
       'book',
       JSON.stringify({
-        asin: bookUrl.split('?')[0].split('/').pop(),
-        link: bookUrl.split('?')[0],
-        title: title ? title : 'Unknown title',
+        asin: asin,
       })
     );
-    await Queue.sendDownloadBook(bookUrl, jobId, user.id, true);
+    await Queue.sendDownloadBook(asin, jobId, user.id, true);
     res.status(200).send({ message: 'Book download request received' });
   }
 
@@ -101,6 +94,7 @@ export class AudibleController {
             asin: s.asin,
             link: s.link,
             summary: s.summary,
+            lastChecked: s.lastChecked,
             tags: uniqueTags,
             authors: uniqueAuthors,
             narrators: uniqueNarrators,

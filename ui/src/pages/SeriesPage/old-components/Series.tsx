@@ -102,6 +102,15 @@ const SeriesComponent = (props: any) => {
           </Row>
           <Row>
             <Col>
+              <Space>
+                <Text type="secondary">
+                  <Released pastText="This series was last refreshed" time={series.lastChecked} />
+                </Text>
+              </Space>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
               <Text>
                 <Released pastText="Latest book was released" futureText="Next book will be released in" time={series.latestBook.released} />
               </Text>

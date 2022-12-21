@@ -2,8 +2,8 @@ import { RabbitMQConnection, RabbitMQAudibleChannel } from '../config/rabbitmq.c
 import { APILogger } from '../logger/api.logger';
 const logger = new APILogger('Queue');
 
-export const sendDownloadBook = async (url: string, jobId: number | null, userId: number, addToUser: boolean, force?: boolean): Promise<void> => {
-  logger.debug('Sending download book request: ' + url);
+export const sendDownloadBook = async (asin: string, jobId: number | null, userId: number, addToUser: boolean, force?: boolean): Promise<void> => {
+  logger.debug('Sending download book request: ' + asin);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
       //await channel.assertQueue(RabbitMQAudibleChannel());
@@ -11,7 +11,7 @@ export const sendDownloadBook = async (url: string, jobId: number | null, userId
         RabbitMQAudibleChannel(),
         Buffer.from(
           JSON.stringify({
-            url: url,
+            asin: asin,
             type: 'book',
             jobId: jobId ? jobId : null,
             userId: userId ? userId : null,
@@ -24,8 +24,8 @@ export const sendDownloadBook = async (url: string, jobId: number | null, userId
   });
 };
 
-export const sendDownloadSeries = async (url: string, jobId: number | null, userId?: number, force?: boolean): Promise<void> => {
-  logger.debug('Sending download series request: ' + url);
+export const sendDownloadSeries = async (asin: string, jobId: number | null, userId?: number, force?: boolean): Promise<void> => {
+  logger.debug('Sending download series request: ' + asin);
   RabbitMQConnection().then((connection) => {
     connection.createChannel().then(async (channel) => {
       //await channel.assertQueue(RabbitMQAudibleChannel());
@@ -33,7 +33,7 @@ export const sendDownloadSeries = async (url: string, jobId: number | null, user
         RabbitMQAudibleChannel(),
         Buffer.from(
           JSON.stringify({
-            url: url,
+            asin: asin,
             type: 'series',
             jobId: jobId ? jobId : null,
             userId: userId ? userId : null,

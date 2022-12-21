@@ -132,7 +132,7 @@ class App {
     });
 
     this.express.post('/api/book', async (req: any, res) => {
-      this.audibleService.requestBookDownload(req.user, req.body?.bookUrl, res);
+      this.audibleService.requestBookDownload(req.user, req.body?.asin, res);
     });
 
     this.express.get('/api/my-series', async (req: any, res) => {

@@ -42,6 +42,7 @@ export class SeriesService {
       link: result.link,
       summary: result.summary,
       lastUpdated: result.last_updated,
+      lastChecked: result.last_checked,
       created: result.created,
     };
   }
